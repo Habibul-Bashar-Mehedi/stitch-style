@@ -1,0 +1,193 @@
+<section class="page-container py-10">
+  <header class="flex flex-wrap items-end justify-between gap-4">
+    <div>
+      <p class="text-sm font-semibold uppercase tracking-widest text-primary">{{ 'account.account' | t }}</p>
+      <h1 class="text-3xl font-black tracking-tight sm:text-4xl">{{ 'account.title' | t }}</h1>
+    </div>
+    @if (auth.me(); as user) {
+      <div class="flex items-center gap-3 rounded-2xl border border-base-300 bg-base-100 px-4 py-3">
+        @if (user.pictureUrl) {
+          <img [src]="user.pictureUrl" [alt]="user.fullName" class="h-10 w-10 rounded-full object-cover" referrerpolicy="no-referrer" />
+        }
+        <div>
+          <p class="text-sm font-bold">{{ user.fullName }}</p>
+          <p class="text-xs opacity-60">{{ user.email }}</p>
+        </div>
+        <button class="btn btn-ghost btn-sm" (click)="auth.logout()">Sign out</button>
+      </div>
+    }
+  </header>
+
+  @if (loading()) {
+    <div class="mt-8 space-y-3">
+      @for (item of [1,2,3]; track item) { <div class="skeleton h-20 rounded-2xl"></div> }
+    </div>
+  } @else if (!auth.me()) {
+    <div class="mt-10 rounded-3xl border border-dashed border-base-300 p-12 text-center">
+      <p class="text-2xl font-black">{{ 'account.signIn' | t }}</p>
+      <p class="mt-2 text-sm opacity-60">{{ 'account.guestHint' | t }}</p>
+      <button class="btn btn-primary mt-6" (click)="auth.login()">Sign in with Google</button>
+      <a class="btn btn-outline mt-6" routerLink="/track">Track a guest order</a>
+    </div>
+  } @else {
+    <div class="mt-6 flex gap-1 border-b border-base-300" role="tablist" aria-label="Account sections">
+      <button
+        type="button"
+        role="tab"
+        class="flex items-center gap-2 border-b-2 px-3 py-2 text-sm font-semibold transition-colors"
+        [class.border-primary]="tab() === 'orders'"
+        [class.text-primary]="tab() === 'orders'"
+        [class.border-transparent]="tab() !== 'orders'"
+        [class.opacity-60]="tab() !== 'orders'"
+        [attr.aria-selected]="tab() === 'orders'"
+        (click)="setTab('orders')"
+      >
+        {{ 'account.ordersTab' | t }}
+        <span class="badge badge-ghost badge-sm">{{ orderCount() }}</span>
+      </button>
+      <button
+        type="button"
+        role="tab"
+        class="flex items-center gap-2 border-b-2 px-3 py-2 text-sm font-semibold transition-colors"
+        [class.border-primary]="tab() === 'returns'"
+        [class.text-primary]="tab() === 'returns'"
+        [class.border-transparent]="tab() !== 'returns'"
+        [class.opacity-60]="tab() !== 'returns'"
+        [attr.aria-selected]="tab() === 'returns'"
+        (click)="setTab('returns')"
+      >
+        {{ 'account.returnsTab' | t }}
+        <span class="badge badge-ghost badge-sm">{{ returnCount() }}</span>
+      </button>
+    </div>
+
+    @if (tab() === 'orders') {
+      @if (orders().length === 0) {
+        <div class="mt-10 rounded-3xl border border-dashed border-base-300 p-12 text-center">
+          <p class="text-2xl font-black">{{ 'account.noOrders' | t }}</p>
+          <p class="mt-2 text-sm opacity-60">Your next order will appear here.</p>
+          <a class="btn btn-primary mt-6" routerLink="/">{{ 'account.start' | t }}</a>
+        </div>
+      } @else {
+        <div class="mt-6 space-y-3">
+          @for (order of orders(); track order.orderNumber) {
+            <div class="rounded-2xl border border-base-300 bg-base-100 p-5 shadow-sm">
+              <div class="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <p class="font-mono text-sm font-bold">{{ order.orderNumber }}</p>
+                  <p class="mt-1 text-xs opacity-60">{{ order.placedAt | date:'medium' }}</p>
+                </div>
+                <div class="flex flex-wrap items-center gap-2">
+                  <span class="badge" [ngClass]="orderBadge(order.status)">{{ order.status }}</span>
+                  <span class="badge badge-outline" [ngClass]="paymentBadge(order.paymentStatus)">{{ order.paymentStatus }}</span>
+                  <span class="font-black text-primary">{{ formatBdt(order.grandTotal) }}</span>
+                </div>
+              </div>
+
+              <div class="mt-3 flex flex-wrap gap-2 text-xs opacity-70">
+                @for (item of order.items; track item.productName + item.sizeLabel) {
+                  <span class="badge badge-ghost">{{ item.productName }} · {{ item.sizeLabel }} × {{ item.quantity }}</span>
+                }
+              </div>
+
+              <div class="mt-3 flex flex-wrap items-center gap-2 border-t border-base-200 pt-3 text-xs">
+                @if (order.returnInfo.eligibility === 'ELIGIBLE') {
+                  <a class="btn btn-outline btn-xs" [routerLink]="['/returns/request']" [queryParams]="{ order: order.orderNumber }">
+                    {{ order.returnInfo.previousReturnId ? ('return.requestAgain' | t) : ('return.returnItems' | t) }}
+                  </a>
+                  @if (order.returnInfo.previousRejectionReason) {
+                    <span class="opacity-60">{{ 'return.previousRejected' | t }}: {{ order.returnInfo.previousRejectionReason }}</span>
+                  }
+                } @else if (order.returnInfo.eligibility === 'ALREADY_REQUESTED') {
+                  <button class="btn btn-ghost btn-xs" (click)="setTab('returns')">
+                    <span class="badge badge-sm" [ngClass]="returnBadge(order.returnInfo.status ?? '')">{{ statusKey(order.returnInfo.status ?? '') | t }}</span>
+                    {{ 'return.viewReturn' | t }}
+                  </button>
+                } @else if (order.returnInfo.eligibility === 'WINDOW_CLOSED') {
+                  <span class="opacity-60">{{ 'return.windowClosed' | t }} {{ order.returnInfo.windowEndsAt | date:'mediumDate' }}</span>
+                }
+                @if (order.returnInfo.windowEndsAt && order.returnInfo.eligibility === 'ELIGIBLE') {
+                  <span class="ml-auto opacity-50">{{ 'return.windowEnds' | t }} {{ order.returnInfo.windowEndsAt | date:'mediumDate' }}</span>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      }
+    } @else {
+      @if (returns().length === 0) {
+        <div class="mt-10 rounded-3xl border border-dashed border-base-300 p-12 text-center">
+          <p class="text-2xl font-black">{{ 'account.noReturns' | t }}</p>
+          <p class="mt-2 text-sm opacity-60">{{ 'account.noReturnsHint' | t }}</p>
+          <button class="btn btn-primary mt-6" (click)="setTab('orders')">{{ 'account.ordersTab' | t }}</button>
+        </div>
+      } @else {
+        <div class="mt-6 space-y-3">
+          @for (item of returns(); track item.id) {
+            <div class="rounded-2xl border border-base-300 bg-base-100 p-5 shadow-sm">
+              <div class="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <p class="font-mono text-sm font-bold">{{ item.orderNumber }}</p>
+                  <p class="mt-1 text-xs opacity-60">{{ 'return.requestedOn' | t }} {{ item.requestedAt | date:'mediumDate' }}</p>
+                  @if (item.resolvedAt) {
+                    <p class="text-xs opacity-60">{{ 'return.resolvedOn' | t }} {{ item.resolvedAt | date:'mediumDate' }}</p>
+                  }
+                </div>
+                <span class="badge" [ngClass]="returnBadge(item.status)">{{ statusKey(item.status) | t }}</span>
+              </div>
+
+              @if (item.reason) {
+                <p class="mt-3 text-sm"><span class="opacity-60">{{ 'return.reasonLabel' | t }}:</span> {{ item.reason }}</p>
+              }
+              @if (item.resolutionNote) {
+                <p class="mt-1 text-sm"><span class="opacity-60">{{ 'return.resolutionNote' | t }}:</span> {{ item.resolutionNote }}</p>
+              }
+
+              <div class="mt-3 flex flex-wrap gap-2 text-xs">
+                @for (line of item.items; track line.id) {
+                  <span class="badge badge-ghost">
+                    {{ line.productName }} · {{ line.sizeLabel }} × {{ line.quantity }} ·
+                    {{ ('return.condition.' + line.condition.toLowerCase()) | t }}
+                  </span>
+                }
+              </div>
+
+              @if (item.quote; as quote) {
+                <div class="mt-3 rounded-xl bg-base-200 p-3 text-xs">
+                  <div class="flex items-center justify-between gap-3">
+                    <span class="opacity-60">{{ 'return.quote.items' | t }}</span>
+                    <span>{{ formatBdt(quote.itemsAmount) }}</span>
+                  </div>
+                  @if (quote.couponDiscountShare > 0) {
+                    <div class="flex items-center justify-between gap-3">
+                      <span class="opacity-60">{{ 'return.quote.coupon' | t }}</span>
+                      <span>− {{ formatBdt(quote.couponDiscountShare) }}</span>
+                    </div>
+                  }
+                  @if (quote.deliveryAmount > 0) {
+                    <div class="flex items-center justify-between gap-3">
+                      <span class="opacity-60">{{ 'return.quote.delivery' | t }}</span>
+                      <span>{{ formatBdt(quote.deliveryAmount) }}</span>
+                    </div>
+                  }
+                  <div class="mt-1 flex items-center justify-between gap-3 border-t border-base-300 pt-1 font-bold">
+                    <span>{{ 'return.quote.total' | t }}</span>
+                    <span class="text-primary">{{ formatBdt(quote.total) }}</span>
+                  </div>
+                </div>
+              }
+
+              @if (item.status === 'REFUNDED') {
+                <p class="mt-3 text-sm">
+                  <span class="opacity-60">{{ 'return.refund' | t }}:</span>
+                  <span class="font-bold text-primary">{{ formatBdt(item.refundAmount ?? 0) }}</span>
+                  @if (item.refundMethod) { <span class="opacity-60">via {{ item.refundMethod }}</span> }
+                </p>
+              }
+            </div>
+          }
+        </div>
+      }
+    }
+  }
+</section>

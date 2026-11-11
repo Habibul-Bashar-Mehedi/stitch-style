@@ -1,0 +1,75 @@
+<section class="page-container py-8">
+  <div class="flex items-end justify-between gap-4">
+    <div>
+      <p class="text-sm font-semibold uppercase tracking-widest text-primary">Your bag</p>
+      <h1 class="text-4xl font-black tracking-tight">{{ 'cart.title' | t }}</h1>
+    </div>
+    <a routerLink="/" class="btn btn-ghost btn-sm">{{ 'cart.continue' | t }}</a>
+  </div>
+
+  @if (lines().length === 0) {
+    <div class="mt-10 rounded-3xl border border-dashed border-base-300 p-12 text-center">
+      <p class="text-2xl font-black">{{ 'cart.empty' | t }}</p>
+      <p class="mt-2 text-sm opacity-60">Browse a collection and pick a size to add your first item.</p>
+      <div class="mt-6 flex flex-wrap justify-center gap-3">
+        @for (shop of shops; track shop.slug) {
+          <a class="btn btn-outline" [routerLink]="['/collections', shop.slug]">{{ shop.labelKey | t }}</a>
+        }
+      </div>
+    </div>
+  } @else {
+    <div class="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-[1fr_360px]">
+      <div class="space-y-4">
+        <label class="flex cursor-pointer items-center gap-3 rounded-2xl border border-base-300 bg-base-100 px-4 py-3">
+          <input type="checkbox" class="checkbox checkbox-primary" [checked]="allSelected()" (change)="toggleAll($event)" />
+          <span class="text-sm font-semibold">{{ 'cart.selectAll' | t }}</span>
+          <span class="ml-auto text-xs opacity-60">{{ lines().length }} lines</span>
+        </label>
+
+        @for (line of lines(); track line.variantId) {
+          <div class="rounded-2xl border border-base-300 bg-base-100 p-4 shadow-sm">
+            <div class="flex items-start gap-3">
+              <input type="checkbox" class="checkbox checkbox-primary mt-1" [checked]="line.selected" (change)="cart.toggle(line.variantId, $any($event.target).checked)" />
+              <div class="min-w-0 flex-1">
+                <div class="flex flex-wrap items-start justify-between gap-2">
+                  <div>
+                    <a [routerLink]="['/products', line.productSlug]" class="font-semibold hover:text-primary">{{ line.productName }}</a>
+                    <p class="mt-1 text-xs opacity-60">Size: {{ line.sizeLabel }} · {{ line.available }} available</p>
+                  </div>
+                  <p class="font-black text-primary">{{ formatBdt(line.lineTotal) }}</p>
+                </div>
+
+                @if (line.stockChanged) {
+                  <p class="mt-2 text-xs text-warning">Stock changed — only {{ line.available }} available.</p>
+                }
+
+                <div class="mt-3 flex flex-wrap items-center justify-between gap-3">
+                  <div class="join">
+                    <button class="btn btn-sm join-item" (click)="changeQuantity(line.variantId, line.quantity - 1)" [disabled]="line.quantity <= 1">−</button>
+                    <span class="join-item flex min-w-12 items-center justify-center border border-base-300 px-3 text-sm font-semibold">{{ line.quantity }}</span>
+                    <button class="btn btn-sm join-item" (click)="changeQuantity(line.variantId, line.quantity + 1)" [disabled]="line.quantity >= line.available">+</button>
+                  </div>
+                  <button class="btn btn-ghost btn-xs text-error" (click)="remove(line.variantId)">{{ 'cart.remove' | t }}</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+
+      <aside class="h-fit rounded-3xl border border-base-300 bg-base-100 p-6 shadow-sm lg:sticky lg:top-24">
+        <h2 class="text-xl font-black">{{ 'cart.summary' | t }}</h2>
+        <div class="mt-4 space-y-2 text-sm">
+          <div class="flex justify-between"><span class="opacity-70">{{ 'cart.subtotal' | t }}</span><span class="font-semibold">{{ formatBdt(cart.cart().subtotal) }}</span></div>
+          <div class="flex justify-between"><span class="opacity-70">{{ 'cart.discount' | t }}</span><span class="font-semibold text-success">−{{ formatBdt(cart.cart().discountTotal) }}</span></div>
+          <div class="flex justify-between"><span class="opacity-70">{{ 'cart.delivery' | t }}</span><span class="font-semibold">{{ formatBdt(cart.cart().deliveryCharge) }}</span></div>
+          <div class="divider my-2"></div>
+          <div class="flex justify-between text-base"><span class="font-bold">{{ 'cart.total' | t }}</span><span class="font-black text-primary">{{ formatBdt(cart.cart().grandTotal) }}</span></div>
+        </div>
+        <p class="mt-3 text-xs opacity-60">Delivery is calculated from the selected area at checkout.</p>
+        <a class="btn btn-primary mt-5 w-full" routerLink="/checkout" [class.btn-disabled]="cart.selectedCount() === 0">{{ 'cart.checkout' | t }}</a>
+        <p class="mt-2 text-center text-xs opacity-60">{{ cart.selectedCount() }} selected line(s)</p>
+      </aside>
+    </div>
+  }
+</section>

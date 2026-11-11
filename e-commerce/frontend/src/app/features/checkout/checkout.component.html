@@ -1,0 +1,130 @@
+<section class="page-container py-8">
+  <div class="flex items-end justify-between gap-4">
+    <div>
+      <p class="text-sm font-semibold uppercase tracking-widest text-primary">Almost there</p>
+      <h1 class="text-4xl font-black tracking-tight">{{ 'checkout.title' | t }}</h1>
+    </div>
+    <a routerLink="/cart" class="btn btn-ghost btn-sm">Back to cart</a>
+  </div>
+
+  @if (order(); as placed) {
+    <div class="mx-auto mt-10 max-w-2xl rounded-3xl border border-base-300 bg-base-100 p-8 text-center shadow-sm">
+      <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-success/15 text-3xl">✓</div>
+      <h2 class="mt-5 text-3xl font-black">{{ 'checkout.placed' | t }}</h2>
+      <p class="mt-2 text-sm opacity-70">Keep your order number and tracking token safe.</p>
+      <div class="mt-6 rounded-2xl bg-base-200 p-4 text-left text-sm">
+        <div class="flex justify-between gap-4"><span class="opacity-60">Order number</span><span class="font-mono font-bold">{{ placed.orderNumber }}</span></div>
+        <div class="mt-2 flex justify-between gap-4"><span class="opacity-60">Status</span><span class="badge badge-warning">{{ placed.status }}</span></div>
+        <div class="mt-2 flex justify-between gap-4"><span class="opacity-60">{{ 'checkout.payment' | t }}</span><span class="badge badge-outline">{{ placed.paymentStatus }}</span></div>
+        <div class="mt-2 flex justify-between gap-4"><span class="opacity-60">Total</span><span class="font-black">{{ formatBdt(placed.grandTotal) }}</span></div>
+      </div>
+      <div class="mt-6 flex flex-wrap justify-center gap-3">
+        @if (placed.redirectUrl) {
+          <a class="btn btn-primary" [href]="placed.redirectUrl">Continue to payment</a>
+        }
+        <a class="btn btn-outline" [routerLink]="['/track']" [queryParams]="{ token: placed.publicToken }">Track this order</a>
+        <a class="btn btn-ghost" routerLink="/">Continue shopping</a>
+      </div>
+    </div>
+  } @else if (selected().length === 0) {
+    <div class="mt-10 rounded-3xl border border-dashed border-base-300 p-12 text-center">
+      <p class="text-2xl font-black">No items selected.</p>
+      <p class="mt-2 text-sm opacity-60">Go back to the cart and select at least one item to check out.</p>
+      <a routerLink="/cart" class="btn btn-primary mt-6">Back to cart</a>
+    </div>
+  } @else {
+    <form class="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-[1fr_360px]" [formGroup]="form" (ngSubmit)="submit()">
+      <div class="space-y-6">
+        <div class="rounded-3xl border border-base-300 bg-base-100 p-6 shadow-sm">
+          <h2 class="text-xl font-black">{{ 'checkout.delivery' | t }}</h2>
+          <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <label class="form-control sm:col-span-1">
+              <span class="label-text mb-1 font-semibold">{{ 'checkout.name' | t }}</span>
+              <input class="input input-bordered" formControlName="name" placeholder="Nusrat Jahan" />
+              @if (form.controls.name.touched && form.controls.name.invalid) { <span class="mt-1 text-xs text-error">Enter your full name.</span> }
+            </label>
+            <label class="form-control">
+              <span class="label-text mb-1 font-semibold">{{ 'checkout.phone' | t }}</span>
+              <input class="input input-bordered" formControlName="phone" placeholder="01712345678" />
+              @if (form.controls.phone.touched && form.controls.phone.invalid) { <span class="mt-1 text-xs text-error">Use 01XXXXXXXXX or +8801XXXXXXXXX.</span> }
+            </label>
+            <label class="form-control sm:col-span-2">
+              <span class="label-text mb-1 font-semibold">{{ 'checkout.address' | t }}</span>
+              <textarea class="textarea textarea-bordered min-h-24" formControlName="address" placeholder="House, road, area, district"></textarea>
+              @if (form.controls.address.touched && form.controls.address.invalid) { <span class="mt-1 text-xs text-error">Enter a complete delivery address.</span> }
+            </label>
+            <label class="form-control">
+              <span class="label-text mb-1 font-semibold">{{ 'checkout.area' | t }}</span>
+              <select class="select select-bordered" formControlName="areaId">
+                @for (area of areas(); track area.id) {
+                  <option [value]="area.id">{{ area.name }}{{ area.district ? ' · ' + area.district : '' }} — {{ formatBdt(area.deliveryCharge) }}</option>
+                }
+              </select>
+            </label>
+            <label class="form-control">
+              <span class="label-text mb-1 font-semibold">{{ 'checkout.note' | t }}</span>
+              <input class="input input-bordered" formControlName="note" placeholder="Please call before delivery" />
+            </label>
+          </div>
+        </div>
+
+        <div class="rounded-3xl border border-base-300 bg-base-100 p-6 shadow-sm">
+          <h2 class="text-xl font-black">{{ 'checkout.payment' | t }}</h2>
+          <div class="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+            @for (method of methods(); track method.code) {
+              <label class="flex cursor-pointer items-center gap-3 rounded-2xl border border-base-300 p-4" [class.border-primary]="form.controls.paymentMethod.value === method.code">
+                <input type="radio" class="radio radio-primary" formControlName="paymentMethod" [value]="method.code" />
+                <span>
+                  <span class="block font-semibold">{{ method.label }}</span>
+                  <span class="block text-xs opacity-60">{{ method.code === 'COD' ? 'Pay when the order arrives' : 'Sandbox-ready online payment' }}</span>
+                </span>
+              </label>
+            }
+          </div>
+          @if (!methods().length) {
+            <p class="mt-3 text-sm text-warning">No payment method is enabled. Contact the store administrator.</p>
+          }
+        </div>
+      </div>
+
+      <aside class="h-fit rounded-3xl border border-base-300 bg-base-100 p-6 shadow-sm lg:sticky lg:top-24">
+        <h2 class="text-xl font-black">Your order</h2>
+        <div class="mt-4 space-y-3">
+          @for (line of selected(); track line.variantId) {
+            <div class="flex justify-between gap-3 text-sm">
+              <div>
+                <p class="font-semibold">{{ line.productName }}</p>
+                <p class="text-xs opacity-60">{{ line.sizeLabel }} × {{ line.quantity }}</p>
+              </div>
+              <p class="font-semibold">{{ formatBdt(line.lineTotal) }}</p>
+            </div>
+          }
+        </div>
+        <div class="divider my-3"></div>
+        <div class="space-y-2 text-sm">
+          <div class="flex justify-between"><span class="opacity-70">Subtotal</span><span>{{ formatBdt(cart.cart().subtotal) }}</span></div>
+          <div class="flex justify-between"><span class="opacity-70">Discount</span><span class="text-success">−{{ formatBdt(cart.cart().discountTotal) }}</span></div>
+          <div class="flex justify-between"><span class="opacity-70">Delivery</span><span>{{ formatBdt(deliveryEstimate()) }}</span></div>
+          <div class="flex justify-between text-base font-black"><span>Total</span><span class="text-primary">{{ formatBdt(cart.cart().subtotal + deliveryEstimate()) }}</span></div>
+        </div>
+        <div class="mt-4 rounded-2xl bg-base-200 p-3">
+          <label class="label-text mb-1 text-xs font-semibold">{{ 'checkout.coupon' | t }}</label>
+          <div class="flex gap-2">
+            <input class="input input-bordered input-sm w-full" formControlName="couponCode" placeholder="EID10" />
+            <button class="btn btn-sm" type="button" (click)="applyCoupon()">{{ 'checkout.apply' | t }}</button>
+          </div>
+          @if (couponMessage()) { <p class="mt-1 text-xs opacity-70">{{ couponMessage() }}</p> }
+        </div>
+
+        @if (error()) {
+          <div class="alert alert-error mt-4 py-2 text-sm">{{ error() }}</div>
+        }
+        <button class="btn btn-primary mt-5 w-full" type="submit" [disabled]="loading() || form.invalid || selected().length === 0">
+          @if (loading()) { <span class="loading loading-spinner loading-sm"></span> }
+          {{ 'checkout.place' | t }}
+        </button>
+        <p class="mt-2 text-center text-xs opacity-60">By placing the order you accept the terms and privacy notice.</p>
+      </aside>
+    </form>
+  }
+</section>

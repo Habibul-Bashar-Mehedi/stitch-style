@@ -1,0 +1,13 @@
+backend/build/
+backend/.gradle/
+backend/data/
+backend/.idea/
+frontend/node_modules/
+frontend/dist/
+frontend/.angular/
+frontend/.cache/
+*.log
+.DS_Store
+.env
+frontend/test-results/
+frontend/playwright-report/

@@ -1,0 +1,69 @@
+<section class="page-container py-6 print:p-0">
+  <div class="mb-4 flex items-center justify-between print:hidden">
+    <div>
+      <h1 class="text-3xl font-black">Invoices</h1>
+      <p class="text-sm opacity-60">{{ invoices().length }} selected order(s)</p>
+    </div>
+    <div class="flex gap-2">
+      <a class="btn btn-sm btn-outline" routerLink="/admin/orders">Back</a>
+      <button class="btn btn-sm btn-primary" (click)="print()">Print</button>
+    </div>
+  </div>
+
+  @for (invoice of invoices(); track invoice.orderNumber) {
+    <article class="invoice mb-6 break-after-page rounded-2xl border border-base-300 bg-white p-8 text-black print:mb-0 print:break-after-page print:rounded-none print:border-0 print:p-0">
+      <header class="flex items-start justify-between gap-6 border-b border-gray-300 pb-4">
+        <div>
+          <h2 class="text-2xl font-black">{{ invoice.businessName || 'Stitch & Style' }}</h2>
+          <p class="text-sm text-gray-600">{{ invoice.businessPhone }}</p>
+        </div>
+        <div class="text-right text-sm">
+          <p class="font-mono font-bold">{{ invoice.orderNumber }}</p>
+          <p class="text-gray-600">{{ invoice.placedAt | date:'medium' }}</p>
+          <p class="mt-1">{{ invoice.status }} · {{ invoice.paymentStatus }}</p>
+        </div>
+      </header>
+
+      <div class="mt-4 grid grid-cols-2 gap-4 text-sm">
+        <div>
+          <p class="font-bold">Bill to</p>
+          <p>{{ invoice.customerName }}</p>
+          <p>{{ invoice.customerPhone }}</p>
+          <p class="whitespace-pre-line">{{ invoice.shippingAddress }}</p>
+        </div>
+        <div class="text-right">
+          <p class="font-bold">Delivery</p>
+          <p>{{ invoice.deliveryArea }}</p>
+          <p>{{ invoice.paymentMethod }}</p>
+        </div>
+      </div>
+
+      <table class="mt-5 w-full text-sm">
+        <thead class="border-b border-gray-300 text-left">
+          <tr><th class="py-2">Item</th><th>Size</th><th>SKU</th><th class="text-right">Qty</th><th class="text-right">Unit</th><th class="text-right">Total</th></tr>
+        </thead>
+        <tbody>
+          @for (item of invoice.items; track item.sku) {
+            <tr class="border-b border-gray-200">
+              <td class="py-2">{{ item.productName }}</td>
+              <td>{{ item.sizeLabel }}</td>
+              <td>{{ item.sku }}</td>
+              <td class="text-right">{{ item.quantity }}</td>
+              <td class="text-right">{{ formatBdt(item.unitPrice) }}</td>
+              <td class="text-right">{{ formatBdt(item.lineTotal) }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+
+      <div class="mt-5 ml-auto w-64 space-y-1 text-sm">
+        <div class="flex justify-between"><span>Subtotal</span><span>{{ formatBdt(invoice.subtotal) }}</span></div>
+        <div class="flex justify-between"><span>Delivery</span><span>{{ formatBdt(invoice.deliveryCharge) }}</span></div>
+        <div class="flex justify-between"><span>Product discount</span><span>−{{ formatBdt(invoice.discountTotal) }}</span></div>
+        <div class="flex justify-between"><span>Coupon</span><span>−{{ formatBdt(invoice.couponDiscount) }}</span></div>
+        <div class="flex justify-between border-t border-gray-300 pt-2 text-lg font-black"><span>Total</span><span>{{ formatBdt(invoice.grandTotal) }}</span></div>
+      </div>
+      <p class="mt-8 text-center text-xs text-gray-500">Thank you for shopping with {{ invoice.businessName || 'Stitch & Style' }}.</p>
+    </article>
+  }
+</section>

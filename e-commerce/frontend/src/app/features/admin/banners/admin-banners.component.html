@@ -1,0 +1,186 @@
+<section class="page-container py-8">
+  <header class="flex flex-wrap items-start justify-between gap-4">
+    <div class="min-w-0">
+      <nav class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-widest text-primary" aria-label="Breadcrumb">
+        <a class="link link-hover" routerLink="/admin">Back office</a>
+        <span class="opacity-40">/</span>
+        <span class="opacity-70">Merchandising</span>
+      </nav>
+      <h1 class="mt-1 text-3xl font-black tracking-tight sm:text-4xl">Banners &amp; notices</h1>
+      <p class="mt-1 max-w-2xl text-sm opacity-60">Homepage banners and the messages shown above the storefront.</p>
+    </div>
+    <div class="flex flex-wrap items-center gap-2 sm:ml-auto">
+      <button class="btn btn-outline btn-sm" (click)="startNoticeForm()">New notice</button>
+      <button class="btn btn-primary btn-sm" (click)="startBannerForm()">+ New banner</button>
+    </div>
+  </header>
+
+  @if (message()) {
+    <div class="alert alert-info mt-4" role="status">{{ message() }}</div>
+  }
+
+  <div class="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
+    <div class="rounded-2xl border border-base-300 bg-base-100 p-4">
+      <p class="text-xs font-semibold uppercase tracking-wide opacity-50">Banners</p>
+      <p class="mt-1 text-2xl font-black">{{ banners().length }}</p>
+      <p class="text-xs opacity-60">homepage images</p>
+    </div>
+    <div class="rounded-2xl border border-base-300 bg-base-100 p-4">
+      <p class="text-xs font-semibold uppercase tracking-wide opacity-50">Notices</p>
+      <p class="mt-1 text-2xl font-black">{{ notices().length }}</p>
+      <p class="text-xs opacity-60">storefront messages</p>
+    </div>
+    <div class="rounded-2xl border border-base-300 bg-base-100 p-4">
+      <p class="text-xs font-semibold uppercase tracking-wide opacity-50">Pinned notices</p>
+      <p class="mt-1 text-2xl font-black">{{ pinnedNotices() }}</p>
+      <p class="text-xs opacity-60">with a priority above 0</p>
+    </div>
+    <div class="rounded-2xl border border-base-300 bg-base-100 p-4">
+      <p class="text-xs font-semibold uppercase tracking-wide opacity-50">Scheduled</p>
+      <p class="mt-1 text-2xl font-black">{{ scheduledCount() }}</p>
+      <p class="text-xs opacity-60">with a start or end date</p>
+    </div>
+  </div>
+
+  <div class="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-2">
+    <!-- Banners -->
+    <section class="rounded-2xl border border-base-300 bg-base-100">
+      <div class="flex flex-wrap items-center justify-between gap-3 border-b border-base-200 p-4">
+        <div class="min-w-0 flex-1">
+          <h2 class="text-lg font-black">Banners</h2>
+          <p class="text-xs opacity-60">Wide images shown in the homepage carousel.</p>
+        </div>
+        <span class="badge badge-ghost badge-sm shrink-0">{{ banners().length }}</span>
+      </div>
+
+      @if (bannerFormOpen()) {
+        <div class="border-b border-base-200 bg-base-200/50 p-4">
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <h3 class="text-sm font-black">New banner</h3>
+              <p class="text-xs opacity-60">A title and an image are required. The link is optional.</p>
+            </div>
+            <button class="btn btn-ghost btn-xs" (click)="closeBannerForm()" aria-label="Close banner form">✕</button>
+          </div>
+          <div class="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <label class="form-control">
+              <span class="label-text mb-1 block text-xs font-semibold">Banner title</span>
+              <input class="input input-bordered input-sm w-full" [(ngModel)]="bannerTitle" placeholder="e.g. Eid collection — up to 30% off" />
+            </label>
+            <label class="form-control">
+              <span class="label-text mb-1 block text-xs font-semibold">Link URL (optional)</span>
+              <input class="input input-bordered input-sm w-full" [(ngModel)]="bannerLink" placeholder="/collections/men" />
+            </label>
+            <label class="form-control sm:col-span-2">
+              <span class="label-text mb-1 block text-xs font-semibold">Banner image</span>
+              <input class="file-input file-input-bordered file-input-sm w-full" type="file" accept="image/*" (change)="onFile($event)" />
+            </label>
+          </div>
+          <div class="mt-3 flex flex-wrap gap-2">
+            <button class="btn btn-primary btn-sm" (click)="createBanner()">Upload banner</button>
+            <button class="btn btn-ghost btn-sm" (click)="closeBannerForm()">Cancel</button>
+          </div>
+        </div>
+      }
+
+      <div class="divide-y divide-base-200">
+        @for (banner of banners(); track banner.id) {
+          <div class="flex items-center gap-3 p-4">
+            @if (banner.imageUrl) {
+              <img [src]="banner.imageUrl" [alt]="banner.title" class="h-12 w-20 shrink-0 rounded-lg border border-base-300 object-cover" />
+            } @else {
+              <div class="flex h-12 w-20 shrink-0 items-center justify-center rounded-lg border border-dashed border-base-300 text-[10px] opacity-50">No image</div>
+            }
+            <div class="min-w-0 flex-1">
+              <p class="truncate font-semibold">{{ banner.title }}</p>
+              <div class="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs opacity-60">
+                <span class="badge badge-ghost badge-sm">#{{ banner.displayOrder + 1 }}</span>
+                @if (banner.linkUrl) {
+                  <span class="max-w-48 truncate" [title]="banner.linkUrl">{{ banner.linkUrl }}</span>
+                  @if (banner.startsAt || banner.endsAt) {
+                    <span class="opacity-40">·</span>
+                  }
+                }
+                @if (banner.startsAt || banner.endsAt) {
+                  <span>{{ banner.startsAt | date: 'mediumDate' }} – {{ banner.endsAt | date: 'mediumDate' }}</span>
+                }
+              </div>
+            </div>
+            <button class="btn btn-ghost btn-xs shrink-0 text-error" (click)="removeBanner(banner)" [attr.aria-label]="'Delete banner ' + banner.title">Delete</button>
+          </div>
+        } @empty {
+          <div class="p-8 text-center text-sm opacity-60">
+            <p>No banners yet.</p>
+            <button class="btn btn-primary btn-sm mt-3" (click)="startBannerForm()">+ New banner</button>
+          </div>
+        }
+      </div>
+    </section>
+
+    <!-- Notices -->
+    <section class="rounded-2xl border border-base-300 bg-base-100">
+      <div class="flex flex-wrap items-center justify-between gap-3 border-b border-base-200 p-4">
+        <div class="min-w-0 flex-1">
+          <h2 class="text-lg font-black">Notices</h2>
+          <p class="text-xs opacity-60">Short messages shown above the storefront pages.</p>
+        </div>
+        <span class="badge badge-ghost badge-sm shrink-0">{{ notices().length }}</span>
+      </div>
+
+      @if (noticeFormOpen()) {
+        <div class="border-b border-base-200 bg-base-200/50 p-4">
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <h3 class="text-sm font-black">New notice</h3>
+              <p class="text-xs opacity-60">A title and a body are required. Higher priority appears first.</p>
+            </div>
+            <button class="btn btn-ghost btn-xs" (click)="closeNoticeForm()" aria-label="Close notice form">✕</button>
+          </div>
+          <div class="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <label class="form-control">
+              <span class="label-text mb-1 block text-xs font-semibold">Notice title</span>
+              <input class="input input-bordered input-sm w-full" [(ngModel)]="noticeTitle" placeholder="e.g. Eid delivery cut-off" />
+            </label>
+            <label class="form-control">
+              <span class="label-text mb-1 block text-xs font-semibold">Priority</span>
+              <input class="input input-bordered input-sm w-full" type="number" min="0" [(ngModel)]="noticePriority" placeholder="0" />
+            </label>
+            <label class="form-control sm:col-span-2">
+              <span class="label-text mb-1 block text-xs font-semibold">Notice body</span>
+              <textarea class="textarea textarea-bordered textarea-sm w-full" rows="3" [(ngModel)]="noticeBody" placeholder="What customers need to know"></textarea>
+            </label>
+          </div>
+          <div class="mt-3 flex flex-wrap gap-2">
+            <button class="btn btn-primary btn-sm" (click)="createNotice()">Publish notice</button>
+            <button class="btn btn-ghost btn-sm" (click)="closeNoticeForm()">Cancel</button>
+          </div>
+        </div>
+      }
+
+      <div class="divide-y divide-base-200">
+        @for (notice of notices(); track notice.id) {
+          <div class="flex items-start gap-3 p-4">
+            <div class="min-w-0 flex-1">
+              <div class="flex flex-wrap items-center gap-2">
+                <p class="font-semibold">{{ notice.title }}</p>
+                @if (notice.priority > 0) {
+                  <span class="badge badge-primary badge-sm">Priority {{ notice.priority }}</span>
+                }
+              </div>
+              <p class="mt-0.5 line-clamp-2 text-xs opacity-60">{{ notice.body }}</p>
+              @if (notice.startsAt || notice.endsAt) {
+                <p class="mt-1 text-xs opacity-50">{{ notice.startsAt | date: 'mediumDate' }} – {{ notice.endsAt | date: 'mediumDate' }}</p>
+              }
+            </div>
+            <button class="btn btn-ghost btn-xs shrink-0 text-error" (click)="removeNotice(notice)" [attr.aria-label]="'Delete notice ' + notice.title">Delete</button>
+          </div>
+        } @empty {
+          <div class="p-8 text-center text-sm opacity-60">
+            <p>No notices yet.</p>
+            <button class="btn btn-primary btn-sm mt-3" (click)="startNoticeForm()">New notice</button>
+          </div>
+        }
+      </div>
+    </section>
+  </div>
+</section>

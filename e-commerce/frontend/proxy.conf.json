@@ -1,0 +1,32 @@
+{
+  "/api": {
+    "target": "http://localhost:38133",
+    "secure": false,
+    "changeOrigin": true,
+    "xfwd": true
+  },
+  "/oauth2": {
+    "target": "http://localhost:38133",
+    "secure": false,
+    "changeOrigin": true,
+    "xfwd": true
+  },
+  "/login/oauth2": {
+    "target": "http://localhost:38133",
+    "secure": false,
+    "changeOrigin": true,
+    "xfwd": true
+  },
+  "/ws": {
+    "target": "http://localhost:38133",
+    "ws": true,
+    "secure": false,
+    "changeOrigin": true
+  },
+  "/media": {
+    "target": "http://localhost:38133",
+    "secure": false,
+    "changeOrigin": true,
+    "xfwd": true
+  }
+}

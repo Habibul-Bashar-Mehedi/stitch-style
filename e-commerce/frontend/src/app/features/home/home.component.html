@@ -1,0 +1,92 @@
+<section class="page-container py-6">
+  <div class="relative overflow-hidden rounded-3xl border border-base-300 bg-base-200 shadow-sm">
+    @if (hero(); as banner) {
+      <div
+        class="relative min-h-[440px] w-full bg-cover bg-center md:min-h-[520px]"
+        [style.background-image]="'url(' + banner.imageUrl + ')'">
+        <div class="absolute inset-0 flex flex-col justify-center bg-gradient-to-r from-black/75 via-black/50 to-black/20 p-8 md:p-16">
+          <p class="badge badge-primary mb-4 w-fit">Featured</p>
+          <h1 class="max-w-2xl text-4xl font-black tracking-tight text-white sm:text-5xl lg:text-6xl">{{ banner.title || 'Stitch & Style' }}</h1>
+          <p class="mt-4 max-w-xl text-base text-white/85">
+            Fresh arrivals, local delivery and cash on delivery across Bangladesh.
+          </p>
+          <div class="mt-7 flex flex-wrap gap-3">
+            <a class="btn btn-outline border-white/70 text-white hover:border-white hover:bg-white hover:text-base-content" routerLink="/collections/men">{{ 'home.shopMen' | t }}</a>
+            <a class="btn btn-outline border-white/70 text-white hover:border-white hover:bg-white hover:text-base-content" routerLink="/collections/women">{{ 'home.shopWomen' | t }}</a>
+            <a class="btn btn-outline border-white/70 text-white hover:border-white hover:bg-white hover:text-base-content" routerLink="/collections/jewellery">{{ 'home.shopJewellery' | t }}</a>
+          </div>
+        </div>
+      </div>
+    } @else {
+      <div class="relative min-h-[440px] w-full bg-gradient-to-br from-base-300 to-base-200 md:min-h-[520px]">
+        <div class="absolute inset-0 flex flex-col justify-center p-8 md:p-16">
+          <p class="badge badge-primary mb-4 w-fit">New season</p>
+          <h1 class="max-w-2xl text-4xl font-black tracking-tight sm:text-5xl lg:text-6xl">Stitch &amp; Style</h1>
+          <p class="mt-4 max-w-xl text-base opacity-70">
+            Dynamic fashion collections for Bangladesh. Order as a guest, pay cash on delivery, and track every order with a secure token.
+          </p>
+          <div class="mt-7 flex flex-wrap gap-3">
+            <a class="btn btn-outline" routerLink="/collections/men">{{ 'home.shopMen' | t }}</a>
+            <a class="btn btn-outline" routerLink="/collections/women">{{ 'home.shopWomen' | t }}</a>
+            <a class="btn btn-outline" routerLink="/collections/jewellery">{{ 'home.shopJewellery' | t }}</a>
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+</section>
+
+@if (home()?.cards?.length) {
+  <section class="page-container py-8">
+    <div class="mb-5 flex items-end justify-between gap-4">
+      <div>
+        <p class="text-sm font-semibold uppercase tracking-widest text-primary">Collections</p>
+        <h2 class="text-3xl font-black">{{ 'home.collections' | t }}</h2>
+      </div>
+    </div>
+    <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+      @for (card of home()?.cards ?? []; track card.id) {
+        <a [routerLink]="['/collections', card.slug]" class="card group overflow-hidden border border-base-300 bg-base-100 shadow-sm transition hover:-translate-y-1 hover:shadow-xl">
+          <div class="w-full aspect-[16/9] overflow-hidden bg-base-200">
+            <img [src]="card.imageUrl || '/placeholder.svg'" [alt]="card.name" class="h-full w-full object-cover object-center transition duration-500 group-hover:scale-105" loading="lazy" />
+          </div>
+          <div class="card-body">
+            <h3 class="card-title text-xl">{{ card.name }}</h3>
+            @if (card.description) {
+              <p class="line-clamp-2 text-sm opacity-70">{{ card.description }}</p>
+            }
+            <span class="link link-primary text-sm font-semibold">Explore →</span>
+          </div>
+        </a>
+      }
+    </div>
+  </section>
+}
+
+@if (home()?.latestProducts?.length) {
+  <section class="page-container py-8">
+    <div class="mb-5 flex items-end justify-between gap-4">
+      <div>
+        <p class="text-sm font-semibold uppercase tracking-widest text-primary">New in</p>
+        <h2 class="text-3xl font-black">{{ 'home.latest' | t }}</h2>
+      </div>
+      <a class="btn btn-ghost btn-sm" routerLink="/collections/men">{{ 'home.viewAll' | t }}</a>
+    </div>
+    <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+      @for (product of home()?.latestProducts ?? []; track product.id) {
+        <a [routerLink]="productLink(product)" class="group overflow-hidden rounded-2xl border border-base-300 bg-base-100 shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
+          <div class="media-frame aspect-[4/5] bg-base-200">
+            <img [src]="productImage(product)" [alt]="product.name" class="media-cover transition duration-500 group-hover:scale-105" loading="lazy" />
+          </div>
+          <div class="space-y-1 p-3">
+            <p class="line-clamp-1 text-sm font-semibold">{{ product.name }}</p>
+            <p class="text-sm font-black text-primary">{{ formatBdt(product.effectivePrice) }}</p>
+            @if (product.discountPrice) {
+              <p class="text-xs line-through text-base-content/70">{{ formatBdt(product.basePrice) }}</p>
+            }
+          </div>
+        </a>
+      }
+    </div>
+  </section>
+}

@@ -1,5 +1,13 @@
 # Product Requirements Document (PRD)
 
+<!-- track-status:begin -->
+> **Execution status** — **done** — every item complete · updated 10th Nov 2026 11:11 (+0600) by `track_status.py` (track-based-development; do not edit by hand)
+> - **Track file:** [.docs/tracks/stitch-style.md](../.docs/tracks/stitch-style.md)
+> - **Progress:** 71 / 71 complete · 0 incomplete (0 open, 0 in progress, 0 blocked)
+> - **Harness run reports:** none — worked in-session, no `harness run` (`.claude/reports/<run-id>/`)
+> - **Prompt activity reports** (local, gitignored; index [.claude/reports/prompts/index.md](.claude/reports/prompts/index.md)): none yet
+<!-- track-status:end -->
+
 ## Stitch & Style — Dynamic E-Commerce Web Application (Bangladesh Market)
 
 | Field | Value |
@@ -800,6 +808,8 @@ app:
 | FR-J4 | Refund is recorded against the original payment method; prepaid refunds go through the gateway adapter, COD refunds are recorded as a manual payout. | P1 |
 | FR-J5 | `payment_status` becomes `REFUNDED` only when the refund is confirmed, not when it is requested. | P1 |
 
+> **Implemented (11th Nov 2026):** the customer dashboard now exposes return eligibility and history, a return-quote preview and status tracking. Refunds are computed from the returned items with a pro-rata coupon share and delivery refunded only on a full-order return; partial refunds use `PARTIALLY_REFUNDED`. Design and decisions: [`AddMessageAndReturn.md`](AddMessageAndReturn.md).
+
 ### 5.K Media management (new, P0 for admin usability)
 
 | ID | Requirement | Priority |
@@ -812,6 +822,19 @@ app:
 | FR-K6 | A generated `srcset` (e.g., 320/640/960/1280/1920) is available to the frontend; the original is retained. | P0 |
 
 > **Decided (OQ-12, §19.1):** S3-compatible object storage + CDN is the production media path from day one; the local-filesystem implementation is development-only.
+
+### 5.L Support chat (implemented 11th Nov 2026)
+
+| ID | Requirement | Priority |
+|---|---|---|
+| FR-L1 | A signed-in customer can open one open support thread handled by the manager pool; admins may read, assign and reply. | P1 |
+| FR-L2 | A manager and an admin can open a 1:1 internal thread; manager↔manager and admin↔admin threads are not enabled. | P1 |
+| FR-L3 | Messages are persisted before delivery; the socket carries push events, REST carries writes/history. A client-message id makes send idempotent. | P1 |
+| FR-L4 | Read receipts use each participant's last-read message; typing is ephemeral and expires after 4 seconds. | P1 |
+| FR-L5 | An offline recipient receives at most one email per conversation per 15 minutes through the outbox. | P2 |
+| FR-L6 | Chat messages are retained for 24 months and purged by a single-owner scheduled job. | P2 |
+
+The implementation is STOMP over native WebSocket at `/ws`, authenticated by the same session cookie, with optional Redis pub/sub fan-out (`app.chat.fanout=redis`) for multiple replicas. Customer traffic uses `/api/v1/me/chat/**`; staff traffic uses `/api/v1/admin/chat/**`. Design and decisions: [`AddMessageAndReturn.md`](AddMessageAndReturn.md).
 
 ---
 
@@ -1254,6 +1277,8 @@ erDiagram
 | GET | `/api/v1/admin/analytics/summary` | ADMIN (Manager: limited) | Dashboard metrics; revenue, margin and top-product value Admin-only (OQ-4) |
 
 > `staff` replaces v1.1's `managers`. The endpoint manages both Admins and Managers, so "managers" was a misleading name.
+
+> **Chat additions (implemented 11th Nov 2026):** `GET/POST /api/v1/me/chat/conversations`, `GET/POST /api/v1/me/chat/conversations/{id}/messages`, `POST /api/v1/me/chat/conversations/{id}/read`; staff `GET /api/v1/admin/chat/conversations`, `GET/POST .../{id}/messages`, `POST .../{id}/read`, `PATCH .../{id}/assign`, `POST .../{id}/close`, `GET /api/v1/admin/chat/contacts`, `POST /api/v1/admin/chat/internal`. See [`AddMessageAndReturn.md`](AddMessageAndReturn.md) §5.3.
 
 ### 7.5 Order status and payment state machines
 

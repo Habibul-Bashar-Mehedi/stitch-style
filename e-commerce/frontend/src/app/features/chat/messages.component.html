@@ -1,0 +1,82 @@
+<section class="page-container py-8">
+  <header class="flex flex-wrap items-end justify-between gap-4">
+    <div>
+      <p class="text-sm font-semibold uppercase tracking-widest text-primary">{{ 'chat.eyebrow' | t }}</p>
+      <h1 class="text-3xl font-black tracking-tight sm:text-4xl">{{ 'chat.title' | t }}</h1>
+      <p class="mt-1 max-w-2xl text-sm opacity-60">{{ 'chat.subtitle' | t }}</p>
+    </div>
+  </header>
+
+  @if (loading()) {
+    <div class="mt-6 grid gap-4 lg:grid-cols-[20rem_1fr]">
+      <div class="skeleton h-80 rounded-2xl"></div>
+      <div class="skeleton h-80 rounded-2xl"></div>
+    </div>
+  } @else {
+    @if (!hasOpen()) {
+      <div class="mt-6 rounded-2xl border border-base-300 bg-base-100 p-5">
+        <h2 class="text-lg font-black">{{ 'chat.startTitle' | t }}</h2>
+        <p class="mt-1 text-sm opacity-60">{{ 'chat.startHint' | t }}</p>
+        <div class="mt-3 flex flex-col gap-2 sm:flex-row sm:items-end">
+          <textarea
+            class="textarea textarea-bordered textarea-sm w-full"
+            rows="2"
+            [placeholder]="'chat.placeholder' | t"
+            [ngModel]="draft()"
+            (ngModelChange)="draft.set($event)"
+          ></textarea>
+          <button class="btn btn-primary btn-sm shrink-0" (click)="start()">{{ 'chat.start' | t }}</button>
+        </div>
+      </div>
+    }
+
+    <div class="mt-6 grid gap-4 lg:grid-cols-[20rem_1fr]">
+      <div class="rounded-2xl border border-base-300 bg-base-100">
+        <div class="flex items-center justify-between border-b border-base-200 p-4">
+          <h2 class="font-black">{{ 'chat.conversations' | t }}</h2>
+          <span class="badge badge-ghost badge-sm">{{ conversations().length }}</span>
+        </div>
+        <div class="divide-y divide-base-200">
+          @for (conversation of conversations(); track conversation.id) {
+            <button
+              class="w-full p-4 text-left transition-colors hover:bg-base-200"
+              [class.bg-base-200]="active()?.id === conversation.id"
+              (click)="select(conversation.id)"
+            >
+              <div class="flex items-center justify-between gap-2">
+                <p class="truncate font-semibold">
+                  {{ conversation.counterpart?.fullName || ('chat.support' | t) }}
+                </p>
+                <span class="shrink-0 text-[11px] opacity-50">
+                  {{ conversation.lastMessageAt ? (conversation.lastMessageAt | date: 'short') : '' }}
+                </span>
+              </div>
+              <div class="mt-1 flex items-center justify-between gap-2">
+                <p class="truncate text-xs opacity-60">{{ conversation.lastMessagePreview || ('chat.noMessages' | t) }}</p>
+                @if (conversation.unreadCount > 0) {
+                  <span class="badge badge-primary badge-sm">{{ conversation.unreadCount }}</span>
+                }
+              </div>
+              @if (conversation.status === 'CLOSED') {
+                <span class="mt-1 inline-block text-[11px] opacity-50">{{ 'chat.closed' | t }}</span>
+              }
+            </button>
+          } @empty {
+            <p class="p-6 text-center text-sm opacity-60">{{ 'chat.noConversations' | t }}</p>
+          }
+        </div>
+      </div>
+
+      <div class="h-[70vh] min-h-[28rem] overflow-hidden rounded-2xl border border-base-300 bg-base-100">
+        <app-chat-thread
+          [conversation]="active()"
+          [messages]="messages()"
+          [me]="me()"
+          [typing]="chat.typing()"
+          (send)="send($event)"
+          (typingStart)="chat.typingStarted()"
+        />
+      </div>
+    </div>
+  }
+</section>

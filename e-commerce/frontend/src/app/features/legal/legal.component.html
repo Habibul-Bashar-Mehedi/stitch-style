@@ -1,0 +1,47 @@
+<section class="page-container py-10">
+  <div class="mx-auto max-w-3xl">
+    <p class="text-sm font-semibold uppercase tracking-widest text-primary">Stitch &amp; Style</p>
+    <h1 class="mt-1 text-4xl font-black tracking-tight">{{ title }}</h1>
+    <div class="prose prose-sm mt-6 max-w-none opacity-80">
+      @if (i18n.isBangla()) {
+        @switch (slug) {
+          @case ('terms') {
+            <p>এই শর্তাবলী স্টিচ অ্যান্ড স্টাইলের মাধ্যমে পোশাক বিক্রয়ের শর্ত বর্ণনা করে। মূল্য বাংলাদেশি টাকায় (BDT) এবং প্রযোজ্য কর অন্তর্ভুক্ত।</p>
+            <p>অর্ডার স্টক ও ডেলিভারি এলাকার উপর নির্ভরশীল। ক্যাশ অন ডেলিভারি চালু আছে; অনলাইন পেমেন্ট অ্যাডমিন প্যানেল থেকে চালু বা বন্ধ করা যায়।</p>
+            <p>ডিজিটাল কমার্স অপারেশনাল গাইডলাইনস ২০২১ অনুযায়ী বাংলা শর্তাবলী, রিটার্ন/রিফান্ড নীতি, ডেলিভারি শর্ত ও গোপনীয়তা নোটিশ প্রযোজ্য।</p>
+          }
+          @case ('returns') {
+            <p>ডেলিভারির পর নির্ধারিত রিটার্ন সময়ের মধ্যে রিটার্নের অনুরোধ করা যায়। পণ্য নীতিতে বর্ণিত অবস্থায় থাকতে হবে এবং পাঠানোর আগে অনুমোদন প্রয়োজন।</p>
+            <p>অনুমোদিত রিটার্ন পণ্য পাওয়ার পর স্টকে ফেরত নেওয়া হয়। রিফান্ড মূল পেমেন্ট মাধ্যমেই দেওয়া হয়; ক্যাশ অন ডেলিভারি অর্ডারের ক্ষেত্রে ম্যানুয়াল পেআউট হিসেবে রেকর্ড করা হয়।</p>
+          }
+          @case ('privacy') {
+            <p>অর্ডার পূরণের জন্য আমরা নাম, মোবাইল নম্বর, ডেলিভারি ঠিকানা ও অর্ডার ইতিহাস সংগ্রহ করি। তথ্য স্টোরের ডাটাবেসে সংরক্ষিত থাকে এবং কর ও ভোক্তা-বিরোধ সংক্রান্ত প্রয়োজনীয় সময় পর্যন্ত রাখা হয়।</p>
+            <p>সেশন, CSRF সুরক্ষা ও অ্যানোনিমাস গেস্ট কার্টের জন্য প্রয়োজনীয় কুকি ব্যবহৃত হয়। সম্মতির আগে অপ্রয়োজনীয় স্ক্রিপ্ট লোড করা হয় না।</p>
+          }
+          @default {
+            <p>বর্তমান ব্যবসায়িক তথ্য, ডেলিভারি শর্ত ও রিফান্ড নীতির জন্য স্টোরের সাথে যোগাযোগ করুন।</p>
+          }
+        }
+      } @else {
+      @switch (slug) {
+        @case ('terms') {
+          <p>These terms describe the sale of fashion products through Stitch &amp; Style. Prices are in Bangladeshi Taka (BDT) and include applicable taxes unless stated otherwise.</p>
+          <p>Orders are subject to stock availability and delivery-area coverage. Cash on delivery is available; online payment methods are enabled by the store administrator.</p>
+          <p>The Bangla version of the terms, refund/return policy, delivery terms and privacy notice is the version required by the Digital Commerce Operational Guidelines 2021.</p>
+        }
+        @case ('returns') {
+          <p>Return requests are accepted within the configured return window after delivery. Items must be in the condition described in the policy, and the return must be approved before dispatch.</p>
+          <p>Approved returns are restocked after the item is received. Refunds are returned through the original payment medium, or recorded as a manual payout for cash-on-delivery orders.</p>
+        }
+        @case ('privacy') {
+          <p>We collect the name, phone number, delivery address and order history needed to fulfil an order. The data is stored in the store database and retained for the period required by tax and consumer-dispute rules.</p>
+          <p>Essential cookies support the session, CSRF protection and the anonymous guest cart. Non-essential scripts are not loaded before consent.</p>
+        }
+        @default {
+          <p>Contact the store for the current business information, delivery terms and refund policy.</p>
+        }
+      }
+      }
+    </div>
+  </div>
+</section>

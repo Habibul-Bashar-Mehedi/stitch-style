@@ -1,0 +1,142 @@
+<section class="page-container py-8">
+  <header class="flex flex-wrap items-start justify-between gap-4">
+    <div class="min-w-0">
+      <nav class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-widest text-primary" aria-label="Breadcrumb">
+        <span>Back office</span>
+        <span class="opacity-40">/</span>
+        <span class="opacity-70">Dashboard</span>
+      </nav>
+      <h1 class="mt-1 text-3xl font-black tracking-tight sm:text-4xl">Dashboard</h1>
+      <p class="mt-1 max-w-2xl text-sm opacity-60">Orders, revenue and service levels for the current period.</p>
+    </div>
+    <div class="flex flex-wrap items-center gap-2 sm:ml-auto">
+      <a class="btn btn-primary btn-sm" routerLink="/admin/catalog">+ Add product</a>
+    </div>
+  </header>
+
+  @if (analytics(); as a) {
+    <p class="mt-4 text-xs opacity-60">
+      Period {{ a.from | date: 'mediumDate' }} – {{ a.to | date: 'mediumDate' }}
+    </p>
+
+    <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div class="rounded-2xl border border-base-300 bg-base-100 p-5">
+        <p class="text-xs font-semibold uppercase tracking-wide opacity-50">Orders</p>
+        <p class="mt-1 text-3xl font-black">{{ a.orders }}</p>
+        <p class="text-xs opacity-60">placed in this period</p>
+      </div>
+      <div class="rounded-2xl border border-base-300 bg-base-100 p-5">
+        <p class="text-xs font-semibold uppercase tracking-wide opacity-50">Revenue</p>
+        <p class="mt-1 text-3xl font-black text-primary">
+          {{ a.revenue === null || a.revenue === undefined ? 'Hidden' : formatBdt(a.revenue) }}
+        </p>
+        <p class="text-xs opacity-60">{{ a.revenue === null || a.revenue === undefined ? 'Admin-only figure' : 'in this period' }}</p>
+      </div>
+      <div class="rounded-2xl border border-base-300 bg-base-100 p-5">
+        <p class="text-xs font-semibold uppercase tracking-wide opacity-50">Average order</p>
+        <p class="mt-1 text-3xl font-black">
+          {{ a.averageOrderValue === null || a.averageOrderValue === undefined ? 'Hidden' : formatBdt(a.averageOrderValue) }}
+        </p>
+        <p class="text-xs opacity-60">
+          {{ a.averageOrderValue === null || a.averageOrderValue === undefined ? 'Admin-only figure' : 'per order' }}
+        </p>
+      </div>
+      <div class="rounded-2xl border border-base-300 bg-base-100 p-5">
+        <p class="text-xs font-semibold uppercase tracking-wide opacity-50">Overdue complaints</p>
+        <p class="mt-1 text-3xl font-black" [class.text-error]="a.sla.overdueComplaints > 0">{{ a.sla.overdueComplaints }}</p>
+        <p class="text-xs opacity-60">{{ a.sla.overdueComplaints > 0 ? 'need attention now' : 'nothing overdue' }}</p>
+      </div>
+    </div>
+
+    <div class="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-2">
+      <!-- What is selling. -->
+      <div class="rounded-2xl border border-base-300 bg-base-100">
+        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-base-200 p-4">
+          <div>
+            <h2 class="text-lg font-black">Top products</h2>
+            <p class="text-xs opacity-60">Ranked by units sold in this period.</p>
+          </div>
+          <span class="badge badge-ghost badge-sm">{{ a.topProducts.length }}</span>
+        </div>
+
+        @if (a.topProducts.length) {
+          <div class="divide-y divide-base-200">
+            @for (item of a.topProducts; track item.productName) {
+              <div class="flex items-center gap-3 px-4 py-3 text-sm">
+                <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-base-200 text-xs font-bold">{{ $index + 1 }}</span>
+                <span class="min-w-0 flex-1 truncate font-semibold">{{ item.productName }}</span>
+                <span class="whitespace-nowrap text-xs opacity-60">{{ item.quantity }} sold</span>
+                <span class="w-24 whitespace-nowrap text-right font-bold text-primary">{{ formatBdt(item.revenue) }}</span>
+              </div>
+            }
+          </div>
+        } @else {
+          <p class="p-4 text-sm opacity-60">Revenue detail is Admin-only.</p>
+        }
+      </div>
+
+      <!-- Where the orders sit, and the service levels that need watching. -->
+      <div class="rounded-2xl border border-base-300 bg-base-100">
+        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-base-200 p-4">
+          <div>
+            <h2 class="text-lg font-black">Status distribution</h2>
+            <p class="text-xs opacity-60">Where orders sit right now.</p>
+          </div>
+          <span class="badge badge-ghost badge-sm">{{ a.orders }} orders</span>
+        </div>
+
+        <div class="space-y-3 p-4">
+          @for (status of a.statusDistribution; track status.status) {
+            <div>
+              <div class="flex items-center justify-between gap-3 text-sm">
+                <span class="badge badge-sm" [ngClass]="statusBadge(status.status)">{{ status.status }}</span>
+                <span class="font-semibold">{{ status.count }}</span>
+              </div>
+              <div class="mt-1.5 h-1.5 overflow-hidden rounded-full bg-base-200">
+                <div class="h-full rounded-full" [ngClass]="statusBar(status.status)" [style.width.%]="statusShare(status.count)"></div>
+              </div>
+            </div>
+          } @empty {
+            <p class="text-sm opacity-60">No orders in this period.</p>
+          }
+        </div>
+
+        <div class="border-t border-base-200 p-4">
+          <h3 class="text-xs font-semibold uppercase tracking-wide opacity-50">Service levels</h3>
+          <div class="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-3">
+            <div class="rounded-xl bg-base-200 p-3">
+              <p class="text-xs opacity-60">Shipped ≤ 48h</p>
+              <p class="text-xl font-black">{{ a.sla.shippedWithin48Hours }}</p>
+            </div>
+            <div class="rounded-xl bg-base-200 p-3">
+              <p class="text-xs opacity-60">Delivered within SLA</p>
+              <p class="text-xl font-black">{{ a.sla.deliveredWithinSla }}</p>
+            </div>
+            <div class="rounded-xl bg-base-200 p-3">
+              <p class="text-xs opacity-60">Open complaints</p>
+              <p class="text-xl font-black">{{ a.sla.openComplaints }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  } @else {
+    <div class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      @for (tile of [1, 2, 3, 4]; track tile) {
+        <div class="rounded-2xl border border-base-300 bg-base-100 p-5">
+          <div class="skeleton h-3 w-24"></div>
+          <div class="skeleton mt-3 h-8 w-28"></div>
+          <div class="skeleton mt-2 h-3 w-32"></div>
+        </div>
+      }
+    </div>
+    <div class="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-2">
+      @for (panel of [1, 2]; track panel) {
+        <div class="rounded-2xl border border-base-300 bg-base-100 p-5">
+          <div class="skeleton h-5 w-36"></div>
+          <div class="skeleton mt-4 h-32 w-full"></div>
+        </div>
+      }
+    </div>
+  }
+</section>

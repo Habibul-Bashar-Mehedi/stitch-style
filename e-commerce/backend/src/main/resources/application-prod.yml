@@ -1,0 +1,21 @@
+server:
+  servlet:
+    session:
+      cookie:
+        secure: true
+
+springdoc:
+  swagger-ui:
+    enabled: false
+  api-docs:
+    enabled: false
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+
+logging:
+  level:
+    com.stitchstyle: INFO

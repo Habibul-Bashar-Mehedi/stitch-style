@@ -1,0 +1,429 @@
+<section class="page-container py-8">
+  <!-- Header: the subject, then the two primary actions. -->
+  <header class="flex flex-wrap items-start justify-between gap-4">
+    <div class="min-w-0">
+      <nav class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-widest text-primary" aria-label="Breadcrumb">
+        <a class="link link-hover" routerLink="/admin">Back office</a>
+        <span class="opacity-40">/</span>
+        <span class="opacity-70">Catalog</span>
+      </nav>
+      <h1 class="mt-1 text-3xl font-black tracking-tight sm:text-4xl">Products &amp; collections</h1>
+      <p class="mt-1 max-w-2xl text-sm opacity-60">
+        Collections (Men, Women) are the top level. Categories such as Panjabi or Sharee live inside one.
+      </p>
+    </div>
+
+    @if (auth.isStaff()) {
+      <div class="flex flex-wrap items-center gap-2 sm:ml-auto">
+        @if (auth.me(); as user) {
+          <div class="flex items-center gap-2 rounded-full border border-base-300 bg-base-100 py-1 pl-3 pr-1">
+            <span class="max-w-40 truncate text-sm font-semibold">{{ user.fullName }}</span>
+            <span class="badge badge-primary badge-sm">{{ user.role }}</span>
+          </div>
+        }
+        <button class="btn btn-outline btn-sm" (click)="startCategoryForm()">New collection</button>
+        <button class="btn btn-primary btn-sm" (click)="startProductForm()">+ Add product</button>
+      </div>
+    }
+  </header>
+
+  @if (!auth.isStaff()) {
+    <div class="mt-10 rounded-3xl border border-dashed border-base-300 p-12 text-center">
+      <p class="text-2xl font-black">Staff access required.</p>
+      <p class="mt-2 text-sm opacity-60">Sign in with an allow-listed Google account to manage the catalogue.</p>
+      <button class="btn btn-primary mt-6" (click)="auth.login()">Sign in with Google</button>
+    </div>
+  } @else {
+    @if (message()) {
+      <div class="alert alert-info mt-4" role="status">{{ message() }}</div>
+    }
+
+    <!-- At-a-glance catalogue facts. -->
+    <div class="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div class="rounded-2xl border border-base-300 bg-base-100 p-4">
+        <p class="text-xs font-semibold uppercase tracking-wide opacity-50">Collections</p>
+        <p class="mt-1 text-2xl font-black">{{ topLevelCollections().length }}</p>
+        <p class="text-xs opacity-60">Men, Women …</p>
+      </div>
+      <div class="rounded-2xl border border-base-300 bg-base-100 p-4">
+        <p class="text-xs font-semibold uppercase tracking-wide opacity-50">Categories</p>
+        <p class="mt-1 text-2xl font-black">{{ nestedCategories().length }}</p>
+        <p class="text-xs opacity-60">inside the collections</p>
+      </div>
+      <div class="rounded-2xl border border-base-300 bg-base-100 p-4">
+        <p class="text-xs font-semibold uppercase tracking-wide opacity-50">Products</p>
+        <p class="mt-1 text-2xl font-black">{{ products().length }}</p>
+        <p class="text-xs opacity-60">{{ activeProductCount() }} active · {{ featuredProductCount() }} featured</p>
+      </div>
+      <div class="rounded-2xl border border-base-300 bg-base-100 p-4">
+        <p class="text-xs font-semibold uppercase tracking-wide opacity-50">Low stock</p>
+        <p class="mt-1 text-2xl font-black" [class.text-warning]="lowStockCount() > 0">{{ lowStockCount() }}</p>
+        <p class="text-xs opacity-60">sizes at or below the low-stock limit</p>
+      </div>
+    </div>
+
+    <!-- One workspace at a time keeps the page calm; both stay one click away. -->
+    <div class="mt-6 flex flex-wrap items-center gap-1 border-b border-base-300" role="tablist" aria-label="Catalogue workspace">
+      <button
+        type="button"
+        role="tab"
+        class="flex items-center gap-2 border-b-2 px-3 py-2 text-sm font-semibold transition-colors"
+        [class.border-primary]="workspace() === 'collections'"
+        [class.text-primary]="workspace() === 'collections'"
+        [class.border-transparent]="workspace() !== 'collections'"
+        [class.opacity-60]="workspace() !== 'collections'"
+        [attr.aria-selected]="workspace() === 'collections'"
+        (click)="workspace.set('collections')"
+      >
+        Collections &amp; categories
+        <span class="badge badge-ghost badge-sm">{{ categories().length }}</span>
+      </button>
+      <button
+        type="button"
+        role="tab"
+        class="flex items-center gap-2 border-b-2 px-3 py-2 text-sm font-semibold transition-colors"
+        [class.border-primary]="workspace() === 'products'"
+        [class.text-primary]="workspace() === 'products'"
+        [class.border-transparent]="workspace() !== 'products'"
+        [class.opacity-60]="workspace() !== 'products'"
+        [attr.aria-selected]="workspace() === 'products'"
+        (click)="workspace.set('products')"
+      >
+        Products &amp; stock
+        <span class="badge badge-ghost badge-sm">{{ products().length }}</span>
+      </button>
+    </div>
+
+    <!-- ============ Collections & categories ============ -->
+    @if (workspace() === 'collections') {
+      <section class="mt-4 space-y-4">
+        <!-- Form appears only when creating or editing. -->
+        @if (categoryFormOpen()) {
+          <div id="category-form" class="scroll-mt-24 rounded-2xl border border-primary/30 bg-base-100 p-5 shadow-sm">
+            <div class="flex flex-wrap items-start justify-between gap-3 border-b border-base-200 pb-3">
+              <div>
+                <h2 class="text-lg font-black">{{ editingCategoryId ? 'Edit collection / category' : 'New collection / category' }}</h2>
+                <p class="text-xs opacity-60">Set the Explore card image, parent collection and storefront visibility here.</p>
+              </div>
+              <button class="btn btn-ghost btn-sm" type="button" (click)="closeCategoryForm()" aria-label="Close form">✕</button>
+            </div>
+
+            <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              <label class="form-control">
+                <span class="label-text mb-1 block text-xs font-semibold">Name</span>
+                <input class="input input-bordered input-sm w-full" [(ngModel)]="categoryName" name="categoryName" placeholder="e.g. Men, Women, Panjabi" />
+              </label>
+              <label class="form-control">
+                <span class="label-text mb-1 block text-xs font-semibold">Slug (optional)</span>
+                <input class="input input-bordered input-sm w-full" [(ngModel)]="categorySlug" name="categorySlug" placeholder="e.g. men" />
+              </label>
+              <label class="form-control sm:col-span-2 xl:col-span-1">
+                <span class="label-text mb-1 block text-xs font-semibold">Size type</span>
+                <select class="select select-bordered select-sm w-full" [(ngModel)]="categorySizeType" name="categorySizeType">
+                  @for (sizeType of sizeTypes; track sizeType) {
+                    <option [value]="sizeType">{{ sizeType }}</option>
+                  }
+                </select>
+              </label>
+              <label class="form-control sm:col-span-2 xl:col-span-3">
+                <span class="label-text mb-1 block text-xs font-semibold">Description</span>
+                <textarea class="textarea textarea-bordered textarea-sm w-full" rows="2" [(ngModel)]="categoryDescription" name="categoryDescription" placeholder="Shown on the collection page and Explore card"></textarea>
+              </label>
+              <label class="form-control">
+                <span class="label-text mb-1 block text-xs font-semibold">Parent collection / category</span>
+                <select class="select select-bordered select-sm w-full" [(ngModel)]="categoryParentId" name="categoryParentId">
+                  <option [ngValue]="null">Top-level collection (Men, Women…)</option>
+                  @for (option of categoryParentOptions(); track option.id) {
+                    <option [ngValue]="option.id">{{ '— '.repeat(option.depth) }}{{ option.name }}</option>
+                  }
+                </select>
+              </label>
+              <label class="form-control sm:col-span-2 xl:col-span-2">
+                <span class="label-text mb-1 block text-xs font-semibold">Explore / collection image</span>
+                <input class="file-input file-input-bordered file-input-sm w-full" type="file" accept="image/*" (change)="uploadCategoryImage($event)" />
+              </label>
+              @if (categoryImageUrl) {
+                <div class="sm:col-span-2 xl:col-span-3">
+                  <img [src]="categoryImageUrl" alt="Collection image preview" class="h-28 w-full rounded-xl border border-base-300 object-cover" />
+                </div>
+              }
+              <div class="sm:col-span-2 xl:col-span-3">
+                <span class="label-text mb-2 block text-xs font-semibold">Storefront placement</span>
+                <div class="flex flex-wrap items-center gap-x-6 gap-y-2">
+                  <label class="flex items-center gap-2 text-sm"><input type="checkbox" class="checkbox checkbox-sm" [(ngModel)]="categoryOnHome" name="categoryOnHome" /> Home / Explore card <span class="text-xs opacity-50">(top-level only)</span></label>
+                  <label class="flex items-center gap-2 text-sm"><input type="checkbox" class="checkbox checkbox-sm" [(ngModel)]="categoryInNavbar" name="categoryInNavbar" /> Navbar <span class="text-xs opacity-50">(top-level only)</span></label>
+                  <label class="flex items-center gap-2 text-sm"><input type="checkbox" class="checkbox checkbox-sm" [(ngModel)]="categoryActive" name="categoryActive" /> Active</label>
+                </div>
+              </div>
+            </div>
+
+            <div class="mt-5 flex flex-wrap gap-2">
+              <button class="btn btn-primary btn-sm" (click)="saveCategory()">{{ editingCategoryId ? 'Update collection' : 'Create collection' }}</button>
+              <button class="btn btn-ghost btn-sm" (click)="resetCategory()">Reset</button>
+              <button class="btn btn-ghost btn-sm" type="button" (click)="closeCategoryForm()">Close</button>
+            </div>
+          </div>
+        }
+
+        <!-- Collections list first: this is what people come here to scan. -->
+        <div class="rounded-2xl border border-base-300 bg-base-100">
+          <div class="flex flex-wrap items-center justify-between gap-3 border-b border-base-200 p-4">
+            <div class="min-w-0 sm:flex-1">
+              <h2 class="text-lg font-black">Collections &amp; categories</h2>
+              <p class="text-xs opacity-60">
+                {{ topLevelCollections().length }} collections · {{ nestedCategories().length }} categories inside them. Use ↑ ↓ to set storefront order.
+              </p>
+            </div>
+            <button class="btn btn-outline btn-sm shrink-0" (click)="startCategoryForm()">+ New collection / category</button>
+          </div>
+
+          <div class="divide-y divide-base-200">
+            @for (category of categories(); track category.id) {
+              <div class="flex flex-wrap items-center gap-3 px-4 py-3">
+                @if (category.imageUrl) {
+                  <img [src]="category.imageUrl" [alt]="category.name" class="h-12 w-16 shrink-0 rounded-lg border border-base-300 object-cover" />
+                } @else {
+                  <div class="flex h-12 w-16 shrink-0 items-center justify-center rounded-lg border border-dashed border-base-300 text-[10px] opacity-50">No image</div>
+                }
+
+                <div class="min-w-0 flex-1">
+                  <div class="flex flex-wrap items-center gap-2">
+                    <p class="truncate font-semibold">{{ category.name }}</p>
+                    <span class="badge badge-sm" [class.badge-success]="category.active" [class.badge-ghost]="!category.active">{{ category.active ? 'Active' : 'Hidden' }}</span>
+                    @if (category.showOnHome) {
+                      <span class="badge badge-outline badge-sm">Home</span>
+                    }
+                    @if (category.showInNavbar) {
+                      <span class="badge badge-outline badge-sm">Navbar</span>
+                    }
+                  </div>
+                  <p class="mt-0.5 truncate text-xs opacity-60">
+                    /{{ category.slug }}
+                    <span class="opacity-40">·</span>
+                    {{ category.parentId ? parentName(category) : 'Top-level collection' }}
+                    <span class="opacity-40">·</span>
+                    depth {{ category.depth }}
+                  </p>
+                </div>
+
+                <div class="flex w-full flex-wrap items-center justify-end gap-1 sm:w-auto sm:justify-start">
+                  <div class="join">
+                    <button class="btn btn-ghost btn-xs join-item" (click)="moveCategory(category, -1)" aria-label="Move up" title="Move up">↑</button>
+                    <button class="btn btn-ghost btn-xs join-item" (click)="moveCategory(category, 1)" aria-label="Move down" title="Move down">↓</button>
+                  </div>
+                  <button class="btn btn-ghost btn-xs" (click)="editCategory(category)">Edit</button>
+                  <button class="btn btn-ghost btn-xs" (click)="toggle(category)">{{ category.active ? 'Hide' : 'Show' }}</button>
+                  @if (auth.me()?.role === 'ADMIN') {
+                    <button class="btn btn-ghost btn-xs text-error" (click)="deleteCategory(category)" title="Delete this collection (blocked while it has child collections or active products)">Delete</button>
+                  }
+                </div>
+              </div>
+            } @empty {
+              <div class="p-8 text-center text-sm opacity-60">
+                <p>No collections yet. Create Men and Women first.</p>
+                <button class="btn btn-primary btn-sm mt-3" (click)="startCategoryForm()">+ New collection</button>
+              </div>
+            }
+          </div>
+
+          <details class="border-t border-base-200 px-4 py-3 text-xs opacity-70">
+            <summary class="cursor-pointer font-semibold">Deletion rules</summary>
+            <p class="mt-2 max-w-3xl leading-relaxed">
+              Delete is Admin-only. A collection with child categories cannot be deleted — delete or move those first.
+              A collection with <strong>active</strong> products cannot be deleted either; move or delete them first.
+              Hidden products are cleaned up automatically: never-sold ones are removed, sold ones are moved to the hidden
+              "Archived products" collection so order history stays intact.
+            </p>
+          </details>
+        </div>
+      </section>
+    }
+
+    <!-- ============ Products & stock ============ -->
+    @if (workspace() === 'products') {
+      <section class="mt-4 space-y-4">
+        @if (productMessage()) {
+          <div class="alert alert-info py-2 text-sm" role="status">{{ productMessage() }}</div>
+        }
+
+        @if (productFormOpen()) {
+          <div id="product-form" class="scroll-mt-24 rounded-2xl border border-primary/30 bg-base-100 p-5 shadow-sm">
+            <div class="flex flex-wrap items-start justify-between gap-3 border-b border-base-200 pb-3">
+              <div>
+                <h2 class="text-lg font-black">{{ editingProductId ? 'Edit product' : 'Add product' }}</h2>
+                <p class="text-xs opacity-60">Pick the gender (Men / Women) first, then the category under it.</p>
+              </div>
+              <button class="btn btn-ghost btn-sm" type="button" (click)="closeProductForm()" aria-label="Close form">✕</button>
+            </div>
+
+            @if (!categories().length) {
+              <div class="alert alert-warning mt-3 py-2 text-sm">Create a collection (Men/Women) before adding products.</div>
+            }
+
+            <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              <label class="form-control">
+                <span class="label-text mb-1 block text-xs font-semibold">Product name</span>
+                <input class="input input-bordered input-sm w-full" [(ngModel)]="productName" name="productName" placeholder="e.g. Slim Fit Panjabi" />
+              </label>
+              <label class="form-control">
+                <span class="label-text mb-1 block text-xs font-semibold">Slug (optional)</span>
+                <input class="input input-bordered input-sm w-full" [(ngModel)]="productSlug" name="productSlug" placeholder="auto from name" />
+              </label>
+              <label class="form-control">
+                <span class="label-text mb-1 block text-xs font-semibold">Size type</span>
+                <select class="select select-bordered select-sm w-full" [(ngModel)]="productSizeType" name="productSizeType">
+                  @for (sizeType of sizeTypes; track sizeType) {
+                    <option [value]="sizeType">{{ sizeType }}</option>
+                  }
+                </select>
+              </label>
+              <label class="form-control sm:col-span-2 xl:col-span-3">
+                <span class="label-text mb-1 block text-xs font-semibold">Description</span>
+                <textarea class="textarea textarea-bordered textarea-sm w-full" rows="2" [(ngModel)]="productDescription" name="productDescription" placeholder="Product description"></textarea>
+              </label>
+              <label class="form-control">
+                <span class="label-text mb-1 block text-xs font-semibold">Gender</span>
+                <select class="select select-bordered select-sm w-full" [(ngModel)]="productGenderId" name="productGenderId" (ngModelChange)="onGenderChange()">
+                  @for (gender of productGenderOptions(); track gender.id) {
+                    <option [ngValue]="gender.id">{{ gender.name }}</option>
+                  }
+                </select>
+              </label>
+              <label class="form-control">
+                <span class="label-text mb-1 block text-xs font-semibold">Category</span>
+                <select class="select select-bordered select-sm w-full" [(ngModel)]="productCategoryId" name="productCategoryId" (ngModelChange)="onCategoryChange()">
+                  @for (category of productCategoryOptions(); track category.id) {
+                    <option [ngValue]="category.id">{{ '— '.repeat(category.depth) }}{{ category.name }}</option>
+                  }
+                </select>
+              </label>
+              <label class="form-control">
+                <span class="label-text mb-1 block text-xs font-semibold">Product image</span>
+                <input class="file-input file-input-bordered file-input-sm w-full" type="file" accept="image/*" (change)="uploadProductImage($event)" />
+              </label>
+              <label class="form-control">
+                <span class="label-text mb-1 block text-xs font-semibold">Base price</span>
+                <input class="input input-bordered input-sm w-full" type="number" min="0" [(ngModel)]="productPrice" name="productPrice" placeholder="2490" />
+              </label>
+              <label class="form-control">
+                <span class="label-text mb-1 block text-xs font-semibold">Discount price (optional)</span>
+                <input class="input input-bordered input-sm w-full" type="number" min="0" [(ngModel)]="productDiscountPrice" name="productDiscountPrice" placeholder="2190" />
+              </label>
+              <div class="form-control">
+                <span class="label-text mb-1 block text-xs font-semibold">Visibility</span>
+                <div class="flex min-h-8 items-center gap-5">
+                  <label class="flex items-center gap-2 text-sm"><input type="checkbox" class="checkbox checkbox-sm" [(ngModel)]="productActive" name="productActive" /> Active</label>
+                  <label class="flex items-center gap-2 text-sm"><input type="checkbox" class="checkbox checkbox-sm" [(ngModel)]="productFeatured" name="productFeatured" /> Featured</label>
+                </div>
+              </div>
+              @if (productImageUrl) {
+                <div class="sm:col-span-2 xl:col-span-3">
+                  <img [src]="productImageUrl" alt="Product image preview" class="h-36 w-full rounded-xl border border-base-300 object-cover" />
+                </div>
+              }
+            </div>
+
+            <div class="mt-5 rounded-2xl border border-base-300 p-4">
+              <div class="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <h3 class="font-black">Sizes, SKU &amp; stock</h3>
+                  <p class="text-xs opacity-60">Add one row per size. Leave SKU blank to generate it.</p>
+                </div>
+                <button class="btn btn-outline btn-xs" (click)="addVariant()">+ Add size</button>
+              </div>
+              <div class="mt-3 hidden gap-2 px-1 text-[11px] font-semibold uppercase tracking-wide opacity-50 sm:grid sm:grid-cols-12">
+                <span class="sm:col-span-3">Size</span>
+                <span class="sm:col-span-4">SKU</span>
+                <span class="sm:col-span-2">Stock</span>
+                <span class="sm:col-span-2">Low at</span>
+              </div>
+              <div class="mt-2 space-y-2">
+                @for (variant of productVariants; track $index) {
+                  <div class="grid grid-cols-1 gap-2 sm:grid-cols-12">
+                    <input class="input input-bordered input-sm w-full sm:col-span-3" [(ngModel)]="variant.sizeLabel" [name]="'size' + $index" placeholder="Size (M, 32…)" />
+                    <input class="input input-bordered input-sm w-full sm:col-span-4" [(ngModel)]="variant.sku" [name]="'sku' + $index" placeholder="SKU (auto)" />
+                    <input class="input input-bordered input-sm w-full sm:col-span-2" type="number" min="0" [(ngModel)]="variant.stockQuantity" [name]="'stock' + $index" placeholder="Stock" />
+                    <input class="input input-bordered input-sm w-full sm:col-span-2" type="number" min="0" [(ngModel)]="variant.lowStockThreshold" [name]="'low' + $index" placeholder="Low at" />
+                    <button class="btn btn-ghost btn-sm text-error sm:col-span-1" (click)="removeVariant($index)" aria-label="Remove size">×</button>
+                  </div>
+                }
+              </div>
+            </div>
+
+            <div class="mt-5 flex flex-wrap gap-2">
+              <button class="btn btn-primary btn-sm" (click)="saveProduct()">{{ editingProductId ? 'Update product' : 'Create product' }}</button>
+              <button class="btn btn-ghost btn-sm" (click)="resetProduct()">Reset</button>
+              <button class="btn btn-ghost btn-sm" type="button" (click)="closeProductForm()">Close</button>
+            </div>
+          </div>
+        }
+
+        <!-- Products list first: price, status and live stock in one scan. -->
+        <div class="rounded-2xl border border-base-300 bg-base-100">
+          <div class="flex flex-wrap items-center justify-between gap-3 border-b border-base-200 p-4">
+            <div class="min-w-0 sm:flex-1">
+              <h2 class="text-lg font-black">Products &amp; stock</h2>
+              <p class="text-xs opacity-60">
+                Edit a product to change its category, images, price or sizes. Sold products are deactivated
+                instead of deleted so order history stays intact.
+              </p>
+            </div>
+            <button class="btn btn-outline btn-sm shrink-0" (click)="startProductForm()">+ Add product</button>
+          </div>
+
+          <div class="divide-y divide-base-200">
+            @for (product of products(); track product.id) {
+              <div class="flex flex-wrap items-center gap-3 px-4 py-3">
+                @if (product.images?.length) {
+                  <img [src]="product.images[0].url" [alt]="product.name" class="h-14 w-12 shrink-0 rounded-lg border border-base-300 object-cover" />
+                } @else {
+                  <div class="flex h-14 w-12 shrink-0 items-center justify-center rounded-lg border border-dashed border-base-300 text-[10px] opacity-50">No image</div>
+                }
+
+                <div class="min-w-0 flex-1">
+                  <div class="flex flex-wrap items-center gap-2">
+                    <p class="truncate font-semibold">{{ product.name }}</p>
+                    <span class="badge badge-sm" [class.badge-success]="product.active" [class.badge-ghost]="!product.active">{{ product.active ? 'Active' : 'Inactive' }}</span>
+                    @if (product.featured) {
+                      <span class="badge badge-primary badge-sm">Featured</span>
+                    }
+                  </div>
+                  <p class="mt-0.5 flex items-center gap-1.5 text-xs">
+                    <span class="truncate opacity-60">{{ categoryLabel(product) }}</span>
+                    <span class="opacity-40">·</span>
+                    <span class="font-bold">{{ formatBdt(product.effectivePrice) }}</span>
+                  </p>
+                  <div class="mt-2 flex flex-wrap gap-1.5">
+                    @for (variant of product.variants; track variant.id) {
+                      <span
+                        class="inline-flex items-stretch overflow-hidden rounded-lg border border-base-300 bg-base-100 text-xs"
+                        [class.border-error]="variant.active && variant.available <= variant.lowStockThreshold"
+                        [class.text-error]="variant.active && variant.available <= variant.lowStockThreshold"
+                        [title]="variant.active && variant.available <= variant.lowStockThreshold ? 'Low stock' : ''"
+                      >
+                        <span class="flex items-center px-2 py-1 font-semibold">{{ variant.sizeLabel }}</span>
+                        <button class="flex items-center border-l border-base-200 px-2 py-1 hover:bg-base-200" (click)="adjustStock(product, variant.id, -1)" [attr.aria-label]="'Remove stock for ' + product.name + ' size ' + variant.sizeLabel">−</button>
+                        <span class="flex items-center border-l border-base-200 px-2 py-1 tabular-nums" title="Available">{{ variant.available }}</span>
+                        <button class="flex items-center border-l border-base-200 px-2 py-1 hover:bg-base-200" (click)="adjustStock(product, variant.id, 1)" [attr.aria-label]="'Add stock for ' + product.name + ' size ' + variant.sizeLabel">+</button>
+                      </span>
+                    }
+                  </div>
+                </div>
+
+                <div class="flex w-full items-center justify-end gap-1 sm:w-auto sm:justify-start">
+                  <button class="btn btn-outline btn-xs" (click)="editProduct(product)">Edit</button>
+                  <button class="btn btn-ghost btn-xs text-error" (click)="deleteProduct(product)" title="Delete the product; sold products are deactivated instead">Delete</button>
+                </div>
+              </div>
+            } @empty {
+              <div class="p-8 text-center text-sm opacity-60">
+                <p>No products yet. Use the Add product form.</p>
+                <button class="btn btn-primary btn-sm mt-3" (click)="startProductForm()">+ Add product</button>
+              </div>
+            }
+          </div>
+        </div>
+      </section>
+    }
+  }
+</section>

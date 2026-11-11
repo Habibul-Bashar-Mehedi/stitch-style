@@ -1,0 +1,11 @@
+package com.stitchstyle.app.repository;
+
+import com.stitchstyle.app.model.entity.NotificationOutbox;
+import com.stitchstyle.app.model.entity.NotificationStatus;
+import org.springframework.data.jpa.repository.JpaRepository;
+import java.time.Instant;
+import java.util.List;
+
+public interface NotificationOutboxRepository extends JpaRepository<NotificationOutbox, Long> {
+    List<NotificationOutbox> findTop50ByStatusAndNextAttemptAtBeforeOrderByCreatedAtAsc(NotificationStatus status, Instant now);
+}

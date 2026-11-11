@@ -1,0 +1,79 @@
+<section class="page-container py-8">
+  <div class="flex flex-wrap items-end justify-between gap-4">
+    <div>
+      <p class="text-sm font-semibold uppercase tracking-widest text-primary">Operations</p>
+      <h1 class="text-4xl font-black tracking-tight">Returns &amp; refunds</h1>
+    </div>
+    <a class="btn btn-sm btn-outline" routerLink="/admin">Dashboard</a>
+  </div>
+  @if (message()) { <div class="alert alert-info mt-4">{{ message() }}</div> }
+
+  <div class="mt-6 space-y-4">
+    @for (item of returns(); track item.id) {
+      <div class="rounded-2xl border border-base-300 bg-base-100 p-5 shadow-sm">
+        <div class="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <p class="font-mono text-sm font-bold">{{ item.orderNumber }}</p>
+            <p class="mt-1 text-xs opacity-60">Requested {{ item.requestedAt | date:'medium' }}</p>
+            @if (item.reason) { <p class="mt-1 text-sm">{{ item.reason }}</p> }
+            @if (item.resolutionNote) { <p class="mt-1 text-xs opacity-60">Note: {{ item.resolutionNote }}</p> }
+          </div>
+          <span class="badge" [ngClass]="returnBadge(item.status)">{{ item.status }}</span>
+        </div>
+
+        <div class="mt-3 flex flex-wrap gap-2 text-xs">
+          @for (line of item.items; track line.id) {
+            <span class="badge badge-ghost" [title]="(line.unitPrice ?? 0) + ' each'">
+              {{ line.productName }} · {{ line.sizeLabel }} × {{ line.quantity }} · {{ line.condition }}
+              @if (line.lineTotal != null) { · {{ formatBdt(line.lineTotal) }} }
+            </span>
+          }
+        </div>
+
+        @if (item.quote; as quote) {
+          <div class="mt-3 rounded-xl bg-base-200 p-3 text-xs">
+            <div class="flex flex-wrap items-center gap-x-4 gap-y-1">
+              <span class="opacity-60">Items {{ formatBdt(quote.itemsAmount) }}</span>
+              @if (quote.couponDiscountShare > 0) { <span class="opacity-60">Coupon −{{ formatBdt(quote.couponDiscountShare) }}</span> }
+              @if (quote.deliveryAmount > 0) { <span class="opacity-60">Delivery {{ formatBdt(quote.deliveryAmount) }}</span> }
+              <span class="font-bold text-primary">Refund {{ formatBdt(quote.total) }}</span>
+              @if (!quote.fullOrder) { <span class="opacity-60">· partial order</span> }
+            </div>
+          </div>
+        }
+
+        <div class="mt-4 flex flex-wrap items-end gap-2">
+          @if (item.status === 'REQUESTED') {
+            <button class="btn btn-success btn-sm" (click)="advance(item, 'APPROVED')">Approve</button>
+            <button class="btn btn-error btn-sm" (click)="advance(item, 'REJECTED')">Reject</button>
+          }
+          @if (item.status === 'APPROVED') {
+            <button class="btn btn-primary btn-sm" (click)="advance(item, 'RECEIVED')">Mark received + restock</button>
+          }
+          @if (item.status === 'RECEIVED') {
+            <label class="form-control">
+              <span class="label-text mb-1 block text-[11px] font-semibold uppercase tracking-wider opacity-60">Method</span>
+              <select class="select select-bordered select-sm" [(ngModel)]="refundMethod[item.id]">
+                <option value="MANUAL">Manual payout</option>
+                <option value="BKASH">bKash refund</option>
+                <option value="SSLCOMMERZ">SSLCommerz refund</option>
+              </select>
+            </label>
+            <label class="form-control">
+              <span class="label-text mb-1 block text-[11px] font-semibold uppercase tracking-wider opacity-60">
+                Amount @if (item.quote) { (max {{ formatBdt(item.quote.total) }}) }
+              </span>
+              <input class="input input-bordered input-sm w-32" type="number" min="0.01" [attr.max]="item.quote?.total ?? null" [(ngModel)]="refundAmount[item.id]" placeholder="Amount" />
+            </label>
+            <button class="btn btn-primary btn-sm" (click)="refund(item)">Record refund</button>
+          }
+          @if (item.refundMethod) {
+            <span class="text-xs opacity-60">Refunded {{ formatBdt(item.refundAmount ?? 0) }} via {{ item.refundMethod }}</span>
+          }
+        </div>
+      </div>
+    } @empty {
+      <div class="rounded-2xl border border-dashed border-base-300 p-10 text-center text-sm opacity-60">No return requests.</div>
+    }
+  </div>
+</section>

@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="1000" viewBox="0 0 800 1000">
+  <rect width="800" height="1000" fill="#f2f2f2"/>
+  <rect x="80" y="80" width="640" height="840" rx="24" fill="#e6e6e6" stroke="#cfcfcf" stroke-width="4"/>
+  <text x="400" y="480" text-anchor="middle" font-family="sans-serif" font-size="40" fill="#8a8a8a">Stitch &amp; Style</text>
+  <text x="400" y="540" text-anchor="middle" font-family="sans-serif" font-size="26" fill="#a3a3a3">Image coming soon</text>
+</svg>

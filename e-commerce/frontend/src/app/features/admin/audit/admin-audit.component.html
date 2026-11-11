@@ -1,0 +1,39 @@
+<section class="page-container py-8">
+  <div class="flex flex-wrap items-end justify-between gap-4">
+    <div>
+      <p class="text-sm font-semibold uppercase tracking-widest text-primary">Governance</p>
+      <h1 class="text-4xl font-black tracking-tight">Audit log</h1>
+    </div>
+    <a class="btn btn-sm btn-outline" routerLink="/admin">Dashboard</a>
+  </div>
+  @if (message()) { <div class="alert alert-info mt-4">{{ message() }}</div> }
+
+  <div class="mt-6 grid grid-cols-1 gap-3 rounded-2xl border border-base-300 bg-base-100 p-4 sm:grid-cols-3">
+    <input class="input input-bordered" [(ngModel)]="actor" (keyup.enter)="load()" placeholder="Actor email" />
+    <input class="input input-bordered" [(ngModel)]="entityType" (keyup.enter)="load()" placeholder="Entity type (ORDER, PRODUCT…)" />
+    <button class="btn btn-primary" (click)="load()">Filter</button>
+  </div>
+
+  <div class="mt-4 overflow-x-auto rounded-2xl border border-base-300 bg-base-100 shadow-sm">
+    <table class="table table-zebra table-sm">
+      <thead><tr><th>When</th><th>Actor</th><th>Action</th><th>Entity</th><th>Before</th><th>After</th></tr></thead>
+      <tbody>
+        @for (log of logs(); track log.id) {
+          <tr>
+            <td class="text-xs">{{ log.createdAt | date:'short' }}</td>
+            <td class="text-xs">{{ log.actorEmail || 'system' }}</td>
+            <td><span class="badge badge-outline badge-sm">{{ log.action }}</span></td>
+            <td class="text-xs">{{ log.entityType }} #{{ log.entityId }}</td>
+            <td class="max-w-48 truncate text-xs opacity-70">{{ log.beforeState | json }}</td>
+            <td class="max-w-48 truncate text-xs opacity-70">{{ log.afterState | json }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+  <div class="mt-4 flex items-center justify-center gap-2">
+    <button class="btn btn-sm" [disabled]="page() === 0" (click)="changePage(-1)">Previous</button>
+    <span class="text-sm opacity-70">Page {{ page() + 1 }} of {{ totalPages() || 1 }}</span>
+    <button class="btn btn-sm" [disabled]="page() + 1 >= totalPages()" (click)="changePage(1)">Next</button>
+  </div>
+</section>

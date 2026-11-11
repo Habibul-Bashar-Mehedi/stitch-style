@@ -1,0 +1,150 @@
+@if (product(); as p) {
+  <section class="page-container py-8">
+    <div class="breadcrumbs text-sm opacity-60">
+      <ul>
+        <li><a routerLink="/">Home</a></li>
+        <li><a [routerLink]="['/collections', p.categorySlug]">{{ p.categorySlug }}</a></li>
+        <li>{{ p.name }}</li>
+      </ul>
+    </div>
+
+    <div class="mt-4 grid grid-cols-1 gap-8 lg:grid-cols-2">
+      <div class="space-y-3">
+        <div class="media-frame aspect-[4/5] rounded-3xl border border-base-300 bg-base-200">
+          <img [src]="imageUrl()" [alt]="p.name" class="media-cover" />
+        </div>
+        @if (p.images?.length > 1) {
+          <div class="flex gap-2 overflow-x-auto">
+            @for (image of p.images; track image.id) {
+              <button class="media-frame h-20 w-16 shrink-0 rounded-lg border" [class.border-primary]="image.url === imageUrl()" (click)="activeImage.set(image.url)">
+                <img [src]="image.url" [alt]="p.name" class="media-cover" loading="lazy" />
+              </button>
+            }
+          </div>
+        }
+      </div>
+
+      <div class="space-y-5">
+        <div>
+          <p class="text-sm font-semibold uppercase tracking-widest text-primary">{{ p.brand || 'Stitch & Style' }}</p>
+          <h1 class="mt-1 text-4xl font-black tracking-tight">{{ p.name }}</h1>
+          <div class="mt-3 flex items-baseline gap-3">
+            <p class="text-3xl font-black text-primary">{{ formatBdt(displayPrice()) }}</p>
+            @if (p.discountPrice) {
+              <p class="text-lg line-through text-base-content/70">{{ formatBdt(p.basePrice) }}</p>
+              <span class="badge badge-error">Sale</span>
+            }
+          </div>
+        </div>
+
+        <p class="text-sm leading-7 opacity-75">{{ p.description }}</p>
+
+        <div id="size-selector" tabindex="-1" class="rounded-2xl border border-base-300 bg-base-100 p-4 focus:outline-none focus:ring-2 focus:ring-primary">
+          <div class="flex items-center justify-between">
+            <p class="text-sm font-bold uppercase tracking-wider">{{ 'product.selectSize' | t }}</p>
+            <p class="text-xs opacity-60">Required</p>
+          </div>
+          @if (warning()) {
+            <div class="alert alert-warning mt-3 py-2 text-sm">
+              {{ 'product.sizeRequired' | t }}
+            </div>
+          }
+          <div class="mt-3 flex flex-wrap gap-2">
+            @for (variant of p.variants; track variant.id) {
+              <button
+                type="button"
+                class="btn btn-sm min-w-14"
+                [class.btn-primary]="selectedVariant()?.id === variant.id"
+                [class.btn-outline]="selectedVariant()?.id !== variant.id"
+                [disabled]="variant.available <= 0"
+                (click)="select(variant)">
+                {{ variant.sizeLabel }}
+              </button>
+            }
+          </div>
+          @if (!p.variants?.length) {
+            <p class="mt-3 text-sm text-error">This product has no active sizes.</p>
+          }
+        </div>
+
+        <div class="flex flex-col gap-3 sm:flex-row">
+          <button class="btn btn-primary flex-1" (click)="addToCart()" [disabled]="!p.variants?.length">{{ 'product.addToCart' | t }}</button>
+          <button class="btn btn-outline flex-1" (click)="orderNow()" [disabled]="!p.variants?.length">{{ 'product.orderNow' | t }}</button>
+          <button class="btn btn-ghost" (click)="toggleWishlist()">{{ inWishlist() ? ('♥ ' + ('product.saved' | t)) : ('♡ ' + ('product.save' | t)) }}</button>
+        </div>
+
+        @if (added()) {
+          <div class="alert alert-success py-2 text-sm">Added to your cart.</div>
+        }
+
+        <div class="rounded-2xl border border-base-300 bg-base-200 p-4 text-sm">
+          <p class="font-semibold">Delivery &amp; payment</p>
+          <ul class="mt-2 list-inside list-disc space-y-1 opacity-70">
+            <li>Cash on delivery available across the configured delivery areas.</li>
+            <li>{{ p.deliveryEstimate || 'Delivery estimate is shown at checkout.' }}</li>
+            <li>Country of origin: {{ p.originCountry || 'Bangladesh' }} · Model: {{ p.model || '—' }}</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    @if (related().length) {
+      <section class="mt-12">
+        <h2 class="text-2xl font-black">{{ 'product.related' | t }}</h2>
+        <div class="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-4">
+          @for (item of related(); track item.id) {
+            <a [routerLink]="['/products', item.slug]" class="group overflow-hidden rounded-2xl border border-base-300 bg-base-100 shadow-sm">
+              <div class="media-frame aspect-[4/5] bg-base-200">
+                <img [src]="item.images?.[0]?.url || '/placeholder.svg'" [alt]="item.name" class="media-cover transition group-hover:scale-105" loading="lazy" />
+              </div>
+              <div class="p-3">
+                <p class="line-clamp-1 text-sm font-semibold">{{ item.name }}</p>
+                <p class="text-sm font-black text-primary">{{ formatBdt(item.effectivePrice) }}</p>
+              </div>
+            </a>
+          }
+        </div>
+      </section>
+    }
+
+    <section class="mt-12 grid grid-cols-1 gap-8 lg:grid-cols-2">
+      <div>
+        <h2 class="text-2xl font-black">{{ 'product.reviews' | t }}</h2>
+        @if (reviews().length) {
+          <div class="mt-4 space-y-3">
+            @for (review of reviews(); track review.id) {
+              <div class="rounded-2xl border border-base-300 bg-base-100 p-4">
+                <div class="flex items-center justify-between gap-2">
+                  <p class="text-sm font-semibold">{{ review.userDisplayName }}</p>
+                  <p class="text-warning">{{ '★'.repeat(review.rating) }}</p>
+                </div>
+                <p class="mt-1 text-xs opacity-60">{{ review.verifiedPurchase ? 'Verified purchase' : 'Customer review' }}</p>
+                <p class="mt-2 text-sm">{{ review.comment }}</p>
+              </div>
+            }
+          </div>
+        } @else {
+          <p class="mt-3 text-sm opacity-60">No approved reviews yet.</p>
+        }
+      </div>
+      <div class="rounded-2xl border border-base-300 bg-base-100 p-5">
+        <h3 class="font-black">{{ 'product.writeReview' | t }}</h3>
+        <p class="mt-1 text-xs opacity-60">Reviews are moderated and cannot be erased. Staff accounts cannot review.</p>
+        <div class="mt-3 flex items-center gap-2">
+          <span class="text-sm">Rating</span>
+          <select class="select select-bordered select-sm" aria-label="Review rating" [(ngModel)]="reviewRating">
+            @for (rating of [5,4,3,2,1]; track rating) { <option [value]="rating">{{ rating }} ★</option> }
+          </select>
+        </div>
+        <textarea class="textarea textarea-bordered mt-3 w-full" aria-label="Review comment" [(ngModel)]="reviewComment" placeholder="Share your experience"></textarea>
+        @if (reviewMessage()) { <div class="alert alert-info mt-2 py-2 text-sm">{{ reviewMessage() }}</div> }
+        <button class="btn btn-primary btn-sm mt-3" (click)="submitReview()">Submit for moderation</button>
+      </div>
+    </section>
+  </section>
+} @else {
+  <div class="page-container py-20 text-center">
+    <span class="loading loading-spinner loading-lg"></span>
+    <p class="mt-4 text-sm opacity-60">Loading product…</p>
+  </div>
+}

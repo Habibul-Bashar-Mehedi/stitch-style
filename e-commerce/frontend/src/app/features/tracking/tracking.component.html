@@ -1,0 +1,83 @@
+<section class="page-container py-10">
+  <div class="mx-auto max-w-3xl">
+    <p class="text-sm font-semibold uppercase tracking-widest text-primary">{{ 'track.eyebrow' | t }}</p>
+    <h1 class="mt-1 text-4xl font-black tracking-tight">{{ 'track.title' | t }}</h1>
+    <p class="mt-2 text-sm opacity-70">{{ 'track.subtitle' | t }}</p>
+
+    <div class="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2">
+      <div class="rounded-3xl border border-base-300 bg-base-100 p-5 shadow-sm">
+        <h2 class="font-bold">{{ 'track.token' | t }}</h2>
+        <p class="mt-1 text-xs opacity-60">{{ 'track.tokenHint' | t }}</p>
+        <div class="mt-3 flex gap-2">
+          <input class="input input-bordered w-full" [(ngModel)]="token" placeholder="Paste token" (keyup.enter)="trackToken()" />
+          <button class="btn btn-primary" (click)="trackToken()" [disabled]="loading()">{{ 'track.track' | t }}</button>
+        </div>
+      </div>
+      <div class="rounded-3xl border border-base-300 bg-base-100 p-5 shadow-sm">
+        <h2 class="font-bold">{{ 'track.phone' | t }}</h2>
+        <p class="mt-1 text-xs opacity-60">{{ 'track.phoneHint' | t }}</p>
+        <div class="mt-3 space-y-2">
+          <input class="input input-bordered w-full" [(ngModel)]="orderNumber" placeholder="ORD-20261109-7K3M9Q" />
+          <div class="flex gap-2">
+            <input class="input input-bordered w-full" [(ngModel)]="phone" placeholder="01712345678" />
+            <button class="btn btn-primary" (click)="trackPhone()" [disabled]="loading()">{{ 'track.track' | t }}</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    @if (error()) {
+      <div class="alert alert-error mt-6">{{ error() }}</div>
+    }
+
+    @if (loading()) {
+      <div class="mt-8 flex justify-center"><span class="loading loading-spinner loading-lg"></span></div>
+    }
+
+    @if (tracking(); as order) {
+      <div class="mt-8 rounded-3xl border border-base-300 bg-base-100 p-6 shadow-sm">
+        <div class="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <p class="text-xs uppercase tracking-widest opacity-60">Order</p>
+            <p class="text-xl font-black">{{ order.orderNumber }}</p>
+            <p class="mt-1 text-xs opacity-60">Placed {{ order.placedAt | date:'medium' }}</p>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <span class="badge badge-lg badge-warning">{{ order.status }}</span>
+            <span class="badge badge-lg badge-outline">{{ order.paymentStatus }}</span>
+          </div>
+        </div>
+
+        <div class="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <div class="rounded-2xl bg-base-200 p-4">
+            <p class="text-xs uppercase opacity-60">{{ 'track.total' | t }}</p>
+            <p class="mt-1 text-xl font-black text-primary">{{ formatBdt(order.grandTotal) }}</p>
+          </div>
+          <div class="rounded-2xl bg-base-200 p-4">
+            <p class="text-xs uppercase opacity-60">{{ 'track.shipped' | t }}</p>
+            <p class="mt-1 text-sm font-semibold">{{ order.shippedAt ? (order.shippedAt | date:'medium') : 'Not yet' }}</p>
+          </div>
+          <div class="rounded-2xl bg-base-200 p-4">
+            <p class="text-xs uppercase opacity-60">{{ 'track.delivered' | t }}</p>
+            <p class="mt-1 text-sm font-semibold">{{ order.deliveredAt ? (order.deliveredAt | date:'medium') : 'Not yet' }}</p>
+          </div>
+        </div>
+
+        <div class="mt-6">
+          <p class="font-bold">{{ 'track.items' | t }}</p>
+          <div class="mt-2 divide-y divide-base-200">
+            @for (item of order.items; track item.productName + item.sizeLabel) {
+              <div class="flex items-center justify-between gap-4 py-3 text-sm">
+                <div>
+                  <p class="font-semibold">{{ item.productName }}</p>
+                  <p class="text-xs opacity-60">Size {{ item.sizeLabel }} × {{ item.quantity }}</p>
+                </div>
+                <p class="font-semibold">{{ formatBdt(item.unitPrice * item.quantity) }}</p>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+</section>

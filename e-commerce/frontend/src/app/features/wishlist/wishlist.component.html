@@ -1,0 +1,36 @@
+<section class="page-container py-10">
+  <div class="flex flex-wrap items-end justify-between gap-4">
+    <div>
+      <p class="text-sm font-semibold uppercase tracking-widest text-primary">{{ 'wishlist.saved' | t }}</p>
+      <h1 class="text-4xl font-black tracking-tight">{{ 'wishlist.title' | t }}</h1>
+    </div>
+    <a class="btn btn-sm btn-outline" routerLink="/">Continue shopping</a>
+  </div>
+
+  @if (wishlist.items().length === 0) {
+    <div class="mt-10 rounded-3xl border border-dashed border-base-300 p-12 text-center">
+      <p class="text-2xl font-black">{{ 'wishlist.empty' | t }}</p>
+      <p class="mt-2 text-sm opacity-60">{{ 'wishlist.emptyHint' | t }}</p>
+      <div class="mt-6 flex flex-wrap justify-center gap-3">
+        @for (shop of shops; track shop.slug) {
+          <a class="btn btn-outline" [routerLink]="['/collections', shop.slug]">{{ shop.labelKey | t }}</a>
+        }
+      </div>
+    </div>
+  } @else {
+    <div class="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+      @for (item of wishlist.items(); track item.productId) {
+        <div class="overflow-hidden rounded-2xl border border-base-300 bg-base-100 shadow-sm">
+          <a [routerLink]="['/products', item.slug]" class="media-frame block aspect-[4/5] bg-base-200">
+            <img [src]="item.imageUrl || '/placeholder.svg'" [alt]="item.name" class="media-cover" loading="lazy" />
+          </a>
+          <div class="space-y-1 p-3">
+            <a [routerLink]="['/products', item.slug]" class="line-clamp-1 text-sm font-semibold">{{ item.name }}</a>
+            <p class="text-sm font-black text-primary">{{ formatBdt(item.price) }}</p>
+            <button class="btn btn-ghost btn-xs text-error" (click)="wishlist.remove(item.productId)">Remove</button>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</section>

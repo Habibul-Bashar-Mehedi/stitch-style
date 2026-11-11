@@ -1,0 +1,62 @@
+<config xmlns="http://www.ehcache.org/v3">
+    <cache alias="categoryTree">
+        <key-type>java.lang.String</key-type>
+        <value-type>java.lang.Object</value-type>
+        <expiry><ttl unit="minutes">30</ttl></expiry>
+        <resources><heap unit="entries">200</heap></resources>
+    </cache>
+    <cache alias="homeCards">
+        <key-type>java.lang.String</key-type>
+        <value-type>java.lang.Object</value-type>
+        <expiry><ttl unit="minutes">30</ttl></expiry>
+        <resources><heap unit="entries">200</heap></resources>
+    </cache>
+    <cache alias="productList">
+        <key-type>java.lang.String</key-type>
+        <value-type>java.lang.Object</value-type>
+        <expiry><ttl unit="minutes">10</ttl></expiry>
+        <resources><heap unit="entries">2000</heap></resources>
+    </cache>
+    <cache alias="productDetail">
+        <key-type>java.lang.String</key-type>
+        <value-type>java.lang.Object</value-type>
+        <expiry><ttl unit="minutes">10</ttl></expiry>
+        <resources><heap unit="entries">2000</heap></resources>
+    </cache>
+    <cache alias="productStock">
+        <key-type>java.lang.String</key-type>
+        <value-type>java.lang.Object</value-type>
+        <expiry><ttl unit="seconds">10</ttl></expiry>
+        <resources><heap unit="entries">5000</heap></resources>
+    </cache>
+    <cache alias="banners">
+        <key-type>java.lang.String</key-type>
+        <value-type>java.lang.Object</value-type>
+        <expiry><ttl unit="minutes">5</ttl></expiry>
+        <resources><heap unit="entries">200</heap></resources>
+    </cache>
+    <cache alias="notices">
+        <key-type>java.lang.String</key-type>
+        <value-type>java.lang.Object</value-type>
+        <expiry><ttl unit="minutes">5</ttl></expiry>
+        <resources><heap unit="entries">200</heap></resources>
+    </cache>
+    <cache alias="siteSettings">
+        <key-type>java.lang.String</key-type>
+        <value-type>java.lang.Object</value-type>
+        <expiry><ttl unit="minutes">15</ttl></expiry>
+        <resources><heap unit="entries">10</heap></resources>
+    </cache>
+    <cache alias="deliveryAreas">
+        <key-type>java.lang.String</key-type>
+        <value-type>java.lang.Object</value-type>
+        <expiry><ttl unit="minutes">30</ttl></expiry>
+        <resources><heap unit="entries">200</heap></resources>
+    </cache>
+    <cache alias="paymentMethods">
+        <key-type>java.lang.String</key-type>
+        <value-type>java.lang.Object</value-type>
+        <expiry><ttl unit="minutes">5</ttl></expiry>
+        <resources><heap unit="entries">10</heap></resources>
+    </cache>
+</config>

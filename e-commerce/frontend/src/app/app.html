@@ -1,0 +1,105 @@
+<div class="min-h-screen flex flex-col bg-base-100 text-base-content">
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="sticky top-0 z-30 border-b border-base-300 bg-base-100/95 backdrop-blur">
+    <div class="page-container navbar min-h-16 px-0">
+      <div class="flex-1 gap-3">
+        <a routerLink="/" class="btn btn-ghost px-2 text-xl font-black tracking-tight">
+          {{ brandName() }}
+        </a>
+        <nav class="hidden lg:flex items-center gap-1">
+          @for (category of navbar(); track category.id) {
+            <a class="btn btn-ghost btn-sm" [routerLink]="['/collections', category.slug]">{{ category.name }}</a>
+          }
+        </nav>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <a class="btn btn-ghost btn-sm" routerLink="/track">{{ 'nav.track' | t }}</a>
+        <button class="btn btn-ghost btn-sm" (click)="i18n.toggle()" title="Switch language">{{ i18n.isBangla() ? 'EN' : 'বাংলা' }}</button>
+        @if (auth.isStaff()) {
+          <a class="btn btn-ghost btn-sm" routerLink="/admin">{{ 'nav.admin' | t }}</a>
+        }
+        @if (auth.me()) {
+          <a class="btn btn-ghost btn-sm" [routerLink]="auth.isStaff() ? '/admin/messages' : '/messages'">
+            {{ 'nav.messages' | t }}
+            @if (chatUnread.count() > 0) { <span class="badge badge-secondary badge-sm">{{ chatUnread.count() }}</span> }
+          </a>
+        }
+        <a class="btn btn-ghost btn-sm" routerLink="/wishlist">
+          {{ 'nav.wishlist' | t }}
+          @if (wishlist.count() > 0) { <span class="badge badge-secondary badge-sm">{{ wishlist.count() }}</span> }
+        </a>
+        <a class="btn btn-ghost btn-sm" routerLink="/cart">
+          {{ 'nav.cart' | t }}
+          <span class="badge badge-primary badge-sm" aria-live="polite" aria-label="Cart items">{{ cart.count() }}</span>
+        </a>
+        @if (auth.me(); as user) {
+          <div class="dropdown dropdown-end">
+            <button class="btn btn-ghost btn-circle avatar" tabindex="0">
+              <div class="h-9 w-9 overflow-hidden rounded-full ring ring-primary ring-offset-base-100 ring-offset-1">
+                @if (user.pictureUrl) {
+                  <img [src]="user.pictureUrl" [alt]="user.fullName" class="img-cover" referrerpolicy="no-referrer" />
+                } @else {
+                  <span class="flex h-full w-full items-center justify-center bg-primary text-primary-content text-sm font-bold">
+                    {{ user.fullName.slice(0, 1) }}
+                  </span>
+                }
+              </div>
+            </button>
+            <ul class="menu dropdown-content mt-3 w-56 rounded-box bg-base-100 p-2 shadow-xl border border-base-300">
+              <li class="menu-title">{{ user.fullName }}</li>
+              <li><a routerLink="/account">{{ 'nav.orders' | t }}</a></li>
+              <li><button (click)="logout()">{{ 'nav.signout' | t }}</button></li>
+            </ul>
+          </div>
+        } @else {
+          <button class="btn btn-primary btn-sm" (click)="auth.login()">{{ 'nav.signin' | t }}</button>
+        }
+      </div>
+    </div>
+  </header>
+
+  @if (visibleNotices().length > 0) {
+    <div class="page-container w-full pt-3">
+      @for (notice of visibleNotices(); track notice.id) {
+        <div class="alert alert-info mb-2 flex items-start gap-3">
+          <div class="flex-1">
+            <p class="font-semibold">{{ notice.title }}</p>
+            <p class="text-sm opacity-80">{{ notice.body }}</p>
+          </div>
+          <button class="btn btn-ghost btn-xs" (click)="dismiss(notice.id)" aria-label="Dismiss notice">✕</button>
+        </div>
+      }
+    </div>
+  }
+
+  <main id="main" class="flex-1" tabindex="-1">
+    <router-outlet />
+  </main>
+
+  <footer class="mt-12 border-t border-base-300 bg-base-200">
+    <div class="page-container footer grid grid-cols-1 gap-6 py-8 sm:grid-cols-3">
+      <div>
+        <p class="text-lg font-bold">{{ brandName() }}</p>
+        <p class="mt-2 text-sm opacity-70">Dynamic fashion for Bangladesh. Cash on delivery, local delivery areas and bKash / SSLCommerz-ready checkout.</p>
+      </div>
+      <div>
+        <p class="footer-title">{{ 'footer.shop' | t }}</p>
+        @for (category of navbar(); track category.id) {
+          <a class="link link-hover text-sm" [routerLink]="['/collections', category.slug]">{{ category.name }}</a>
+        }
+      </div>
+      <div>
+        <p class="footer-title">{{ 'footer.help' | t }}</p>
+        <a class="link link-hover text-sm" routerLink="/track">{{ 'nav.track' | t }}</a>
+        <a class="link link-hover text-sm" routerLink="/contact">{{ 'footer.contact' | t }}</a>
+        <a class="link link-hover text-sm" routerLink="/returns">{{ 'footer.returns' | t }}</a>
+        <a class="link link-hover text-sm" routerLink="/terms">{{ 'footer.terms' | t }}</a>
+        <a class="link link-hover text-sm" routerLink="/privacy">{{ 'footer.privacy' | t }}</a>
+      </div>
+    </div>
+    <div class="page-container border-t border-base-300 py-4 text-center text-xs opacity-60">
+      © {{ 2026 }} Stitch &amp; Style. Business identifiers are configured from the admin panel.
+    </div>
+  </footer>
+</div>

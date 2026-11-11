@@ -1,0 +1,42 @@
+services:
+  postgres:
+    image: postgres:18
+    container_name: stitchstyle-db
+    environment:
+      POSTGRES_DB: stitchstyle
+      POSTGRES_USER: stitchstyle
+      POSTGRES_PASSWORD: stitchstyle
+    ports:
+      - "5433:5432"
+    volumes:
+      - stitchstyle-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U stitchstyle -d stitchstyle"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    container_name: stitchstyle-redis
+    profiles: ["redis"]
+    ports:
+      - "6379:6379"
+
+  minio:
+    image: minio/minio:latest
+    container_name: stitchstyle-minio
+    profiles: ["media"]
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: stitchstyle
+      MINIO_ROOT_PASSWORD: stitchstyle
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - stitchstyle-minio:/data
+
+volumes:
+  stitchstyle-pgdata:
+  stitchstyle-minio:

@@ -1,0 +1,45 @@
+<section class="page-container py-8">
+  <div class="flex flex-wrap items-end justify-between gap-4">
+    <div>
+      <p class="text-sm font-semibold uppercase tracking-widest text-primary">Marketing</p>
+      <h1 class="text-4xl font-black tracking-tight">Coupons</h1>
+    </div>
+    <a class="btn btn-sm btn-outline" routerLink="/admin">Dashboard</a>
+  </div>
+  @if (message()) { <div class="alert alert-info mt-4">{{ message() }}</div> }
+
+  <div class="mt-6 rounded-2xl border border-base-300 bg-base-100 p-5 shadow-sm">
+    <h2 class="font-black">Create a coupon</h2>
+    <div class="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-6">
+      <input class="input input-bordered" [(ngModel)]="code" placeholder="CODE" />
+      <select class="select select-bordered" [(ngModel)]="discountType">
+        <option value="PERCENT">Percent</option>
+        <option value="FIXED">Fixed</option>
+      </select>
+      <input class="input input-bordered" type="number" [(ngModel)]="discountValue" placeholder="Value" />
+      <input class="input input-bordered" type="number" [(ngModel)]="minSubtotal" placeholder="Min subtotal" />
+      <input class="input input-bordered" type="number" [(ngModel)]="maxUses" placeholder="Max uses" />
+      <button class="btn btn-primary" (click)="create()">Create</button>
+    </div>
+  </div>
+
+  <div class="mt-4 overflow-x-auto rounded-2xl border border-base-300 bg-base-100 shadow-sm">
+    <table class="table table-zebra">
+      <thead><tr><th>Code</th><th>Type</th><th>Value</th><th>Min</th><th>Uses</th><th>Window</th><th>Active</th><th></th></tr></thead>
+      <tbody>
+        @for (coupon of coupons(); track coupon.id) {
+          <tr>
+            <td class="font-mono font-bold">{{ coupon.code }}</td>
+            <td>{{ coupon.discountType }}</td>
+            <td>{{ coupon.discountType === 'PERCENT' ? coupon.discountValue + '%' : formatBdt(coupon.discountValue) }}</td>
+            <td>{{ coupon.minSubtotal ? formatBdt(coupon.minSubtotal) : '—' }}</td>
+            <td>{{ coupon.usedCount }} / {{ coupon.maxUses ?? '∞' }}</td>
+            <td class="text-xs">{{ coupon.startsAt ? (coupon.startsAt | date:'short') : 'now' }} → {{ coupon.endsAt ? (coupon.endsAt | date:'short') : '∞' }}</td>
+            <td><span class="badge" [class.badge-success]="coupon.active" [class.badge-ghost]="!coupon.active">{{ coupon.active ? 'Yes' : 'No' }}</span></td>
+            <td><button class="btn btn-ghost btn-xs text-error" (click)="remove(coupon)">Delete</button></td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</section>
