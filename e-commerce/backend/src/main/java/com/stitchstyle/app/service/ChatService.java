@@ -443,6 +443,17 @@ public class ChatService {
         }
     }
 
+    /**
+     * Resolves the user from the authenticated principal's email. Used by the
+     * WebSocket endpoint, where the SecurityContext is not populated for the
+     * STOMP message but the {@link java.security.Principal} is.
+     */
+    @Transactional(readOnly = true)
+    public void typing(String email, Long conversationId) {
+        userRepository.findByEmailIgnoreCase(email)
+                .ifPresent(user -> typing(user, conversationId));
+    }
+
     public record ChatMessageCreatedEvent(Long conversationId, ChatMessageResponse message, List<Long> recipientIds) {
     }
 
