@@ -1,0 +1,71 @@
+# Stitch & Style local reverse proxy.
+#   http://localhost, http://stitchandstyle.local,
+#   http://stitch-and-style.local, http://stitchstyle.local
+# all reach the Angular dev server on http://angular-app:4200.
+name: stitchstyle
+
+services:
+  angular-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: stitchstyle-angular
+    working_dir: /app
+    command:
+      - npx
+      - ng
+      - serve
+      - --host
+      - 0.0.0.0
+      - --port
+      - "4200"
+      - --poll
+      - "1000"
+      # Boolean flag: the CLI allows all hosts behind the local Nginx proxy.
+      - --allowed-hosts
+      - --proxy-config
+      - proxy.docker.conf.json
+    environment:
+      NG_CLI_ANALYTICS: "false"
+    volumes:
+      # Live source tree; the named volumes keep container-built dependencies and
+      # the Vite/Angular cache instead of shadowing them with the host folders.
+      - ./:/app
+      - /app/node_modules
+      - /app/.angular
+    extra_hosts:
+      # Lets proxy.docker.conf.json reach the Spring backend running on the host.
+      - "host.docker.internal:host-gateway"
+    expose:
+      - "4200"
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        # Angular 22 rejects requests whose Host is not on its allow-list, so the
+        # probe must use `localhost` rather than 127.0.0.1.
+        - "fetch('http://localhost:4200/').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 60s
+    networks:
+      - stitchstyle
+
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: stitchstyle-nginx
+    depends_on:
+      angular-app:
+        condition: service_healthy
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    networks:
+      - stitchstyle
+
+networks:
+  stitchstyle:
+    driver: bridge

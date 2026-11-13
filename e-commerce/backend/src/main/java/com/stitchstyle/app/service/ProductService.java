@@ -12,7 +12,6 @@ import com.stitchstyle.app.exception.DuplicateResourceException;
 import com.stitchstyle.app.exception.ResourceNotFoundException;
 import com.stitchstyle.app.model.entity.*;
 import com.stitchstyle.app.repository.*;
-import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.Cacheable;
@@ -389,10 +388,16 @@ public class ProductService {
             if (minPrice != null) predicates.add(cb.greaterThanOrEqualTo(price, minPrice));
             if (maxPrice != null) predicates.add(cb.lessThanOrEqualTo(price, maxPrice));
             if (sizeLabel != null && !sizeLabel.isBlank()) {
-                var variants = root.join("variants", JoinType.INNER);
-                predicates.add(cb.equal(variants.get("sizeLabel"), sizeLabel));
-                predicates.add(cb.isTrue(variants.get("active")));
-                query.distinct(true);
+                // Product has no variants collection; variants point back to the
+                // product. A correlated EXISTS keeps one row per product and avoids
+                // duplicating products that have several matching sizes.
+                var variant = query.subquery(Long.class);
+                var variantRoot = variant.from(ProductVariant.class);
+                variant.select(variantRoot.get("id")).where(
+                        cb.equal(variantRoot.get("product"), root),
+                        cb.equal(variantRoot.get("sizeLabel"), sizeLabel),
+                        cb.isTrue(variantRoot.get("active")));
+                predicates.add(cb.exists(variant));
             }
             return cb.and(predicates.toArray(Predicate[]::new));
         };

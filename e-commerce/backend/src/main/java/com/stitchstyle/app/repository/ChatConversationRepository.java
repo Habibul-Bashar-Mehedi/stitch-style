@@ -24,7 +24,7 @@ public interface ChatConversationRepository extends JpaRepository<ChatConversati
               and (:status is null or c.status = :status)
               and (:assignedId is null or c.assignedStaff.id = :assignedId)
               and (:unassigned = false or c.assignedStaff is null)
-              and (:q is null or lower(coalesce(c.customer.fullName, '')) like lower(concat('%', :q, '%'))
+              and (:q = '' or lower(coalesce(c.customer.fullName, '')) like lower(concat('%', :q, '%'))
                    or lower(coalesce(c.lastMessagePreview, '')) like lower(concat('%', :q, '%')))
             order by c.lastMessageAt desc
             """)

@@ -37,7 +37,9 @@ app.use(createProxyMiddleware({
   // it (server.forward-headers-strategy=framework) to build the OAuth redirect
   // URI, so the callback and the post-login redirect stay on the frontend origin.
   xfwd: true,
-  pathFilter: ['/api/**', '/oauth2/**', '/login/oauth2/**', '/media/**'],
+  // Plain prefixes on purpose: http-proxy-middleware v4 rejects an array that
+  // mixes plain paths and globs. `/swagger-ui` also covers `/swagger-ui.html`.
+  pathFilter: ['/api', '/oauth2', '/login/oauth2', '/media', '/swagger-ui', '/v3/api-docs'],
 }));
 
 /**

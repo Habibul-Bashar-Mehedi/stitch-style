@@ -26,7 +26,7 @@ public class CheckoutController {
 
     @PostMapping("/orders")
     public ResponseEntity<OrderResponse> place(@Valid @RequestBody OrderRequest request,
-                                               @RequestHeader("Idempotency-Key") String idempotencyKey,
+                                               @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey,
                                                @CookieValue(value = "guest_id", required = false) String guestId,
                                                @RequestParam(required = false) String lang,
                                                @RequestHeader(value = "Accept-Language", required = false) String acceptLanguage,

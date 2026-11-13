@@ -1,5 +1,6 @@
 plugins {
     java
+    jacoco
     alias(libs.plugins.spring.boot)
 }
 
@@ -60,6 +61,44 @@ dependencies {
 
 tasks.withType<Test> {
     useJUnitPlatform()
+}
+
+jacoco {
+    // 0.8.16 is the first line with Java 25 class-file support.
+    toolVersion = libs.versions.jacoco.get()
+}
+
+tasks.test {
+    // A coverage report is produced after every test run, including a failed one
+    // (the agent still writes partial execution data).
+    finalizedBy(tasks.jacocoTestReport)
+}
+
+tasks.jacocoTestReport {
+    dependsOn(tasks.test)
+    reports {
+        xml.required = true
+        html.required = true
+        csv.required = false
+    }
+}
+
+/**
+ * Optional gate, deliberately not wired into `check` yet: the suite is
+ * integration-heavy and the PRD's targets (>= 70% overall, >= 80% on services)
+ * are tracked rather than enforced. Run with `./gradlew jacocoTestCoverageVerification`.
+ */
+tasks.jacocoTestCoverageVerification {
+    dependsOn(tasks.test)
+    violationRules {
+        rule {
+            limit {
+                counter = "LINE"
+                value = "COVEREDRATIO"
+                minimum = "0.70".toBigDecimal()
+            }
+        }
+    }
 }
 
 tasks.named<Jar>("jar") {

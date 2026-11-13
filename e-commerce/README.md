@@ -48,6 +48,36 @@ PORT=4000 node dist/frontend/server/server.mjs
 # http://localhost:4000
 ```
 
+### API documentation
+
+With the backend running, the interactive contract is served by springdoc:
+
+- Swagger UI — <http://localhost:38133/swagger-ui.html>
+- OpenAPI JSON — <http://localhost:38133/v3/api-docs>
+
+Operations are grouped by area (`Storefront`, `Customer`, `Admin`, `Authentication`,
+`Developer`). `Customer` and `Admin` calls need a signed-in session; state-changing
+calls also need the `X-XSRF-TOKEN` header. Fetch the token with
+`GET /api/v1/public/csrf`, then copy the value of the `XSRF-TOKEN` cookie into the
+`X-XSRF-TOKEN` field Swagger UI shows on each POST/PUT/PATCH/DELETE.
+
+Swagger UI and `/v3/api-docs` are **ADMIN-only**. Sign in as an admin and open
+**API docs** from the admin navigation bar (the frontend proxies `/swagger-ui/**`
+and `/v3/api-docs/**` to the backend, so the link works on both the dev server and
+the SSR server). They remain disabled entirely in the `prod` profile.
+
+## Port-less local URL (Docker + Nginx)
+
+```bash
+cd frontend
+docker compose up -d --build
+```
+
+Then open <http://localhost> (or `http://stitchandstyle.local`,
+`http://stitch-and-style.local`, `http://stitchstyle.local` after adding the hosts
+entry). Nginx terminates port 80 and proxies to the Angular dev server with HMR.
+Full setup, hostname and browser-keyword instructions: [`frontend/DOCKER.md`](frontend/DOCKER.md).
+
 ## Configuration
 
 Copy `.env.example` values into your shell or an untracked `.env` loader.
@@ -62,6 +92,7 @@ the app starts with placeholder credentials and the local media adapter.
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | dev placeholders | Google OIDC |
 | `BOOTSTRAP_ADMIN_EMAILS` | `admin@example.com` | First Admin allow-list |
 | `MEDIA_STORAGE` | `local` | `local` or `s3` (stub in this phase) |
+| `MEDIA_LOCAL_ROOT` | `./data/media` | Uploaded media folder. A relative path resolves against the **launch directory**, so use an absolute path when the backend is started from more than one place (Gradle, IDE, SSR). |
 | `PAYMENT_CALLBACK_SECRET` | `dev-callback-secret` | Stub callback signature |
 | `PUBLIC_BASE_URL` | `http://localhost:4000` | Sitemap base URL |
 
@@ -90,19 +121,34 @@ backend directly (bypassing the frontend proxy). The session cookie is named
 cd backend
 ./gradlew test
 
+# Same, plus the JaCoCo HTML/XML coverage report (build/reports/jacoco/test/)
+./gradlew test jacocoTestReport
+
+# Optional coverage gate (LINE >= 70%, not wired into `check`)
+./gradlew jacocoTestCoverageVerification
+
 # Frontend production/SSR build
 cd ../frontend
 npm run build
 
-# Browser E2E + axe accessibility
-npx playwright test
+# Browser E2E (real backend, real DB, real sessions) + axe accessibility
+npm run e2e:all              # builds/starts the stack, seeds, runs Playwright
+npm run e2e -- --headed      # re-run against the stack already started
+npm run e2e:stop             # stop the E2E backend (:38134) and SSR server (:4100)
 
 # API-level browse → price → order → track smoke
 cd ..
 BASE_URL=http://localhost:38133 ./scripts/smoke.sh
 
-# Dependency-free load smoke (k6 profiles are in tests/k6)
+# Dependency-free load smoke
 BASE_URL=http://localhost:38133 ./scripts/load-smoke.sh
+
+# Grafana k6 load test + dashboard (tests/k6)
+cd tests/k6
+docker compose up -d          # InfluxDB :8086 + Grafana :3000
+./run.sh smoke                # or: ./run.sh catalog / checkout
+# dashboard: http://localhost:3000/d/k6-load-testing
+cd ../..
 
 # Two replicas sharing Redis: cache coherence + failover
 ./scripts/two-replica-check.sh
@@ -141,3 +187,30 @@ The original build track is complete: 71 / 71 items in
 [`.docs/tracks/stitch-style.md`](../.docs/tracks/stitch-style.md). The
 messages/returns track is complete: 40 / 40 items in
 [`.docs/tracks/add-message-and-return.md`](../.docs/tracks/add-message-and-return.md).
+
+### Browser E2E
+
+The Playwright suite lives in `frontend/e2e/` and runs the real application:
+
+```bash
+cd frontend
+npm run e2e:install   # once, downloads Chromium
+npm run e2e:all       # stack + seed + tests
+npm run e2e:stop      # when finished
+```
+
+It is isolated from local development: a dedicated `stitchstyle_e2e` database is
+dropped and re-migrated on every setup, the backend runs on **38134** and the SSR
+storefront on **4100**, so your dev servers on 38133/4200 are untouched. The demo
+catalogue is seeded with `scripts/demo-data.sql`.
+
+Authentication is real (session cookie, CSRF header, URL roles), but Google OIDC
+cannot be driven headlessly. Instead, `global-setup.ts` calls
+`POST /api/v1/dev/session` — a dev-tools-only endpoint that creates the same
+server-side session OIDC would. It does not exist unless
+`app.dev-tools.enabled=true`, and it is never enabled in the `prod` profile.
+
+Layout: `e2e/src/pages/` (page objects with verified selectors), `e2e/src/tests/`
+(storefront, checkout, account, admin, accessibility), `e2e/global-setup.ts`
+(admin + customer storage states). Every test records a video in
+`frontend/test-results/`; failures also keep a trace and screenshot.

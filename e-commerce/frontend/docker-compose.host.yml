@@ -1,0 +1,21 @@
+# Host-network Nginx for machines where the Spring backend must stay on the
+# host and the firewall cannot be changed. Requires `npm start` to be running
+# in e-commerce/frontend (the host dev server on 127.0.0.1:4200).
+#
+#   docker compose down
+#   docker compose -f docker-compose.host.yml up -d
+#   # open http://localhost
+#
+# Nginx shares the host network namespace, so it can reach both 127.0.0.1:4200
+# and (through the Angular proxy) 127.0.0.1:38133 without any UFW rules.
+# Linux only (Docker Desktop on macOS/Windows does not support host networking).
+name: stitchstyle
+
+services:
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: stitchstyle-nginx-host
+    network_mode: host
+    volumes:
+      - ./nginx.host.conf:/etc/nginx/conf.d/default.conf:ro
+    restart: unless-stopped

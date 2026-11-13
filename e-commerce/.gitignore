@@ -11,3 +11,6 @@ frontend/.cache/
 .env
 frontend/test-results/
 frontend/playwright-report/
+
+# k6 load-test run artifacts
+tests/k6/results/

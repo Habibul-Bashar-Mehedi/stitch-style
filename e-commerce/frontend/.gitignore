@@ -45,3 +45,8 @@ Thumbs.db
 /test-results/
 /playwright-report/
 /cart-debug.mjs
+
+# Playwright E2E runtime state
+/e2e/.auth/
+/e2e/.run/
+/e2e/.media/

@@ -2,6 +2,8 @@ package com.stitchstyle.app.integration.media;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -12,6 +14,8 @@ import java.nio.file.Path;
 @Component
 @ConditionalOnProperty(name = "app.media.storage", havingValue = "local", matchIfMissing = true)
 public class LocalMediaStorage implements MediaStorage {
+
+    private static final Logger log = LoggerFactory.getLogger(LocalMediaStorage.class);
 
     private final Path root;
     private final String publicBaseUrl;
@@ -25,6 +29,11 @@ public class LocalMediaStorage implements MediaStorage {
         } catch (IOException e) {
             throw new UncheckedIOException("Cannot create media root " + this.root, e);
         }
+        // Logged because a relative app.media.local-root resolves against the
+        // process working directory; seeing the absolute path is the quickest way
+        // to diagnose "uploaded image is missing" when the app was started from
+        // another directory.
+        log.info("Media storage root: {}", this.root);
     }
 
     @Override

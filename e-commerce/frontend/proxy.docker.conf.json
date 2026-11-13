@@ -1,0 +1,50 @@
+{
+  "/api": {
+    "target": "http://host.docker.internal:38133",
+    "secure": false,
+    "changeOrigin": true,
+    "xfwd": true
+  },
+  "/oauth2": {
+    "target": "http://host.docker.internal:38133",
+    "secure": false,
+    "changeOrigin": true,
+    "xfwd": true
+  },
+  "/login/oauth2": {
+    "target": "http://host.docker.internal:38133",
+    "secure": false,
+    "changeOrigin": true,
+    "xfwd": true
+  },
+  "/ws": {
+    "target": "http://host.docker.internal:38133",
+    "ws": true,
+    "secure": false,
+    "changeOrigin": true
+  },
+  "/media": {
+    "target": "http://host.docker.internal:38133",
+    "secure": false,
+    "changeOrigin": true,
+    "xfwd": true
+  },
+  "/swagger-ui": {
+    "target": "http://host.docker.internal:38133",
+    "secure": false,
+    "changeOrigin": true,
+    "xfwd": true
+  },
+  "/swagger-ui.html": {
+    "target": "http://host.docker.internal:38133",
+    "secure": false,
+    "changeOrigin": true,
+    "xfwd": true
+  },
+  "/v3/api-docs": {
+    "target": "http://host.docker.internal:38133",
+    "secure": false,
+    "changeOrigin": true,
+    "xfwd": true
+  }
+}

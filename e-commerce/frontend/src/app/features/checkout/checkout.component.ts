@@ -1,3 +1,4 @@
+import { NgClass } from '@angular/common';
 import { Component, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -9,7 +10,7 @@ import { TranslatePipe } from '../../core/translate.pipe';
 
 @Component({
   selector: 'app-checkout',
-  imports: [ReactiveFormsModule, RouterLink, TranslatePipe],
+  imports: [NgClass, ReactiveFormsModule, RouterLink, TranslatePipe],
   templateUrl: './checkout.component.html',
 })
 export class CheckoutComponent {

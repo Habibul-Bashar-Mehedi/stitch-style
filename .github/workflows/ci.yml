@@ -18,8 +18,17 @@ jobs:
           distribution: temurin
           java-version: "25"
           cache: gradle
-      - name: Test
-        run: ./gradlew test --no-daemon
+      - name: Test with coverage
+        run: ./gradlew test jacocoTestReport --no-daemon
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-jacoco-report
+          path: |
+            e-commerce/backend/build/reports/jacoco/test/html
+            e-commerce/backend/build/reports/jacoco/test/jacocoTestReport.xml
+          if-no-files-found: ignore
 
   frontend:
     runs-on: ubuntu-latest

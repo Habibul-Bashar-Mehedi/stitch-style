@@ -1,0 +1,21 @@
+# Keep the image small and the build deterministic; the bind mount supplies the
+# live sources at runtime.
+node_modules
+dist
+.angular
+.cache
+.git
+.gitignore
+.github
+e2e/.auth
+e2e/.run
+e2e/.media
+test-results
+playwright-report
+coverage
+*.log
+.env
+.env.*
+Dockerfile
+docker-compose.yml
+nginx.conf

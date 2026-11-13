@@ -128,7 +128,7 @@ public class ChatService {
             boolean unassigned = "unassigned".equalsIgnoreCase(assigned);
             Long assignedId = "me".equalsIgnoreCase(assigned) ? staff.getId() : null;
             conversations = conversationRepository.staffQueue(ChatConversationType.SUPPORT, conversationStatus,
-                    assignedId, unassigned, query == null || query.isBlank() ? null : query.trim());
+                    assignedId, unassigned, query == null || query.isBlank() ? "" : query.trim());
         }
         return conversations.stream().map(conversation -> summary(conversation, staff)).toList();
     }

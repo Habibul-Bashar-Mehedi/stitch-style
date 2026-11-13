@@ -20,6 +20,14 @@ export const routes: Routes = [
     canActivate: [staffGuard],
     children: [
       { path: '', loadComponent: () => import('./features/admin/dashboard/admin-dashboard.component').then((m) => m.AdminDashboardComponent) },
+      // Friendly aliases: the dashboard lives at /admin and products at
+      // /admin/catalog, but people naturally try these names.
+      { path: 'dashboard', redirectTo: '', pathMatch: 'full' },
+      { path: 'product', redirectTo: 'catalog', pathMatch: 'full' },
+      { path: 'products', redirectTo: 'catalog', pathMatch: 'full' },
+      { path: 'collections', redirectTo: 'catalog', pathMatch: 'full' },
+      { path: 'categories', redirectTo: 'catalog', pathMatch: 'full' },
+      { path: 'notices', redirectTo: 'banners', pathMatch: 'full' },
       { path: 'catalog', loadComponent: () => import('./features/admin/admin.component').then((m) => m.AdminComponent) },
       { path: 'orders', loadComponent: () => import('./features/admin/orders/admin-orders.component').then((m) => m.AdminOrdersComponent) },
       { path: 'messages', loadComponent: () => import('./features/admin/messages/admin-messages.component').then((m) => m.AdminMessagesComponent) },
@@ -32,6 +40,9 @@ export const routes: Routes = [
       { path: 'audit', loadComponent: () => import('./features/admin/audit/admin-audit.component').then((m) => m.AdminAuditComponent) },
       { path: 'settings', loadComponent: () => import('./features/admin/settings/admin-settings.component').then((m) => m.AdminSettingsComponent) },
       { path: 'banners', loadComponent: () => import('./features/admin/banners/admin-banners.component').then((m) => m.AdminBannersComponent) },
+      // Never dead-end inside the back office: an unknown admin URL goes back
+      // to the dashboard instead of the storefront's "Page not found" screen.
+      { path: '**', redirectTo: '/admin' },
     ],
   },
   { path: 'terms', loadComponent: () => import('./features/legal/legal.component').then((m) => m.LegalComponent), data: { title: 'Terms & conditions' } },

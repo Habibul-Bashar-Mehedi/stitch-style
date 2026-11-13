@@ -20,6 +20,9 @@ import { AuthService } from '../../core/auth.service';
         <a class="btn btn-ghost btn-sm" routerLink="/admin/audit">Audit</a>
         <a class="btn btn-ghost btn-sm" routerLink="/admin/settings">Settings</a>
         <a class="btn btn-ghost btn-sm" routerLink="/admin/banners">Banners</a>
+        @if (auth.me()?.role === 'ADMIN') {
+          <a class="btn btn-ghost btn-sm" href="/swagger-ui/index.html" target="_blank" rel="noopener">API docs</a>
+        }
         <span class="ml-auto text-xs opacity-60">{{ auth.me()?.role }}</span>
       </div>
     </div>

@@ -42,8 +42,11 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/v1/public/**", "/oauth2/**", "/login/oauth2/**",
-                                "/actuator/health/**", "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html",
+                                "/actuator/health/**",
                                 "/media/**", "/sitemap.xml", "/robots.txt", "/api/v1/dev/**").permitAll()
+                        // API documentation is back-office only: an ADMIN session is required
+                        // for both the Swagger UI assets and the generated document.
+                        .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").hasRole("ADMIN")
                         .requestMatchers("/api/v1/auth/logout", "/api/v1/me/**", "/ws/**").authenticated()
                         .requestMatchers("/api/v1/admin/session").hasAnyRole("ADMIN", "MANAGER")
                         .requestMatchers("/api/v1/admin/staff/**", "/api/v1/admin/settings/**",

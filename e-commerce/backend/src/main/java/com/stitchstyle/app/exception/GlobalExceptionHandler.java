@@ -12,6 +12,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.util.List;
 
@@ -120,6 +121,13 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(AccessDeniedException.class)
     ResponseEntity<ProblemDetail> forbidden(AccessDeniedException ex, HttpServletRequest request) {
         return respond(HttpStatus.FORBIDDEN, "Forbidden", "You do not have access to this resource.", "FORBIDDEN", request);
+    }
+
+    @ExceptionHandler(NoResourceFoundException.class)
+    ResponseEntity<ProblemDetail> missingResource(NoResourceFoundException ex, HttpServletRequest request) {
+        // A missing static file (for example a deleted product image) is a normal
+        // 404, not an unhandled failure that pollutes the error log with a 500.
+        return respond(HttpStatus.NOT_FOUND, "Not found", "No resource at this path.", "NOT_FOUND", request);
     }
 
     @ExceptionHandler(Exception.class)
